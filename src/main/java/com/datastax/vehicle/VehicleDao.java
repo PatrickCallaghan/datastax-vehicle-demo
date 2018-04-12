@@ -15,6 +15,7 @@ import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.datastax.demo.SessionLimiter;
 import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ResultSet;
@@ -50,20 +51,30 @@ public class VehicleDao {
 	private static final String QUERY_BY_VEHICLE_DATE = "select * from " + vehicleTable
 			+ " where vehicle = ? and day = ? and date < ? limit 1";
 
+	private static final String SOLR_QUERY_CURRENT_LOCATION = "select * from " + currentLocationTable
+			+ " where solr_query = ?  limit 1000";
+
+	private static final String SOLR_QUERY_VEHICLE = "SELECT * FROM " + vehicleTable + " where solr_query = ?";
+
 	private PreparedStatement insertVehicle;
 	private PreparedStatement insertCurrentLocation;
 	private PreparedStatement insertVehicleState;
 	private PreparedStatement queryVehicle;
 	private PreparedStatement queryVehicleDate;
+	private PreparedStatement queryCurrentLocation;
+	private PreparedStatement queryVehicleSolr;
 
 	private DateFormat solrDateFormatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:sss'Z'");
 	private DateFormat dateFormatter = new SimpleDateFormat("yyyyMMdd");
+
+	private SessionLimiter limiter;
 
 	public VehicleDao(String[] contactPoints) {
 
 		DseCluster cluster = DseCluster.builder().addContactPoints(contactPoints).build();
 
 		this.session = cluster.connect();
+		this.limiter = new SessionLimiter(session);
 
 		this.insertVehicle = session.prepare(INSERT_INTO_VEHICLE);
 		this.insertCurrentLocation = session.prepare(INSERT_INTO_CURRENTLOCATION);
@@ -71,31 +82,38 @@ public class VehicleDao {
 
 		this.queryVehicle = session.prepare(QUERY_BY_VEHICLE);
 		this.queryVehicleDate = session.prepare(QUERY_BY_VEHICLE_DATE);
+		this.queryCurrentLocation = session.prepare(SOLR_QUERY_CURRENT_LOCATION);
+		this.queryVehicleSolr = session.prepare(SOLR_QUERY_VEHICLE);
 	}
 
 	public void insertVehicleData(Vehicle vehicle) {
+		try {
+			limiter.executeAsync(insertVehicle.bind(vehicle.getVehicle(), dateFormatter.format(vehicle.getDate()),
+					vehicle.getDate(), new Point(vehicle.getLatLong().getLat(), vehicle.getLatLong().getLon()),
+					vehicle.getTile2(), vehicle.getSpeed(), vehicle.getTemperature(), vehicle.getProperties()));
 
-		session.execute(insertVehicle.bind(vehicle.getVehicle(), dateFormatter.format(vehicle.getDate()),
-				vehicle.getDate(), new Point(vehicle.getLatLong().getLat(), vehicle.getLatLong().getLon()),
-				vehicle.getTile2(), vehicle.getSpeed(), vehicle.getTemperature(), vehicle.getProperties()));
-
-		session.execute(insertCurrentLocation.bind(vehicle.getVehicle(), vehicle.getTile(), vehicle.getTile2(),
-				new Point(vehicle.getLatLong().getLat(), vehicle.getLatLong().getLon()), vehicle.getDate(),
-				vehicle.getSpeed(), vehicle.getTemperature(), vehicle.getProperties()));
+			limiter.executeAsync(insertCurrentLocation.bind(vehicle.getVehicle(), vehicle.getTile(), vehicle.getTile2(),
+					new Point(vehicle.getLatLong().getLat(), vehicle.getLatLong().getLon()), vehicle.getDate(),
+					vehicle.getSpeed(), vehicle.getTemperature(), vehicle.getProperties()));
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
 	}
 
 	public void insertVehicleStatus(String vehicleId, DateTime statusDate, String status) {
-		session.execute(insertVehicleState.bind(vehicleId, dateFormatter.format(statusDate.toDate()),
-				statusDate.toDate(), status));
+		try {
+			limiter.executeAsync(insertVehicleState.bind(vehicleId, dateFormatter.format(statusDate.toDate()),
+					statusDate.toDate(), status));
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
 	}
 
 	public List<Vehicle> getVehicleMovements(String vehicleId, String dateString) {
 		ResultSet resultSet = session.execute(this.queryVehicle.bind(vehicleId, dateString));
-
 		List<Vehicle> vehicleMovements = new ArrayList<Vehicle>();
-		List<Row> all = resultSet.all();
 
-		for (Row row : all) {
+		for (Row row : resultSet) {
 			Date date = row.getTimestamp("date");
 			Point lat_long = (Point) row.getObject("lat_long");
 			String tile = row.getString("tile");
@@ -113,16 +131,13 @@ public class VehicleDao {
 	}
 
 	public List<Vehicle> searchVehiclesByLonLatAndDistance(int distance, LatLong latLong) {
-
-		String cql = "select * from " + currentLocationTable
-				+ " where solr_query = '{\"q\": \"*:*\", \"fq\": \"{!geofilt sfield=lat_long pt=" + latLong.getLat()
-				+ "," + latLong.getLon() + " d=" + distance + "}\"}'  limit 1000";
-		ResultSet resultSet = session.execute(cql);
+		String solr_query = "{\"q\": \"*:*\", \"fq\": \"{!geofilt sfield=lat_long pt=\"" + latLong.getLat() + " "
+				+ latLong.getLon() + "\" d=" + distance + "}\"}";
+		ResultSet resultSet = session.execute(queryCurrentLocation.bind(solr_query));
 
 		List<Vehicle> vehicleMovements = new ArrayList<Vehicle>();
-		List<Row> all = resultSet.all();
 
-		for (Row row : all) {
+		for (Row row : resultSet) {
 			Date date = row.getTimestamp("date");
 			String vehicleId = row.getString("vehicle");
 			Point lat_long = (Point) row.getObject("lat_long");
@@ -141,14 +156,12 @@ public class VehicleDao {
 	}
 
 	public List<Vehicle> getVehiclesByTile(String tile) {
-		String cql = "select * from " + currentLocationTable + " where solr_query = '{\"q\": \"tile1: " + tile
-				+ "\"}' limit 1000";
-		ResultSet resultSet = session.execute(cql);
+		String solr_query = "{\"q\": \"tile1: " + tile + "\"}";
+		ResultSet resultSet = session.execute(queryCurrentLocation.bind(solr_query));
 
 		List<Vehicle> vehicleMovements = new ArrayList<Vehicle>();
-		List<Row> all = resultSet.all();
 
-		for (Row row : all) {
+		for (Row row : resultSet) {
 			Date date = row.getTimestamp("date");
 			String vehicleId = row.getString("vehicle");
 			Point lat_long = (Point) row.getObject("lat_long");
@@ -168,14 +181,12 @@ public class VehicleDao {
 	}
 
 	public List<Vehicle> getVehiclesByAreaTimeLastPosition(DateTime from, DateTime to) {
-		
-		String cql = "SELECT * FROM datastax.vehicle where solr_query=" + "'{\"q\":\"*:*\"," + "\"fq\":\"date:["
-				+ solrDateFormatter.format(from.toDate()) + " TO " + solrDateFormatter.format(to.toDate()) + "] "
-				+ "AND lat_long:\\\"isWithin(POLYGON((48.736989 10.271339, 48.067576 11.609030, 48.774243 12.913120, 49.595759 11.123788, 48.736989 10.271339)))\\\"\",\"facet\":{\"field\":\"vehicle\", \"limit\":\"5000000\"}}'";
 
-		logger.info(cql);
+		String solr_query = "'{\"q\":\"*:*\"," + "\"fq\":\"date:[" + solrDateFormatter.format(from.toDate()) + " TO "
+				+ solrDateFormatter.format(to.toDate()) + "] "
+				+ "AND lat_long:\\\"isWithin(POLYGON((48.736989 10.271339, 48.067576 11.609030, 48.774243 12.913120, 49.595759 11.123788, 48.736989 10.271339)))\\\"\",\"facet\":{\"field\":\"vehicle\", \"limit\":\"5000000\"}}";
 
-		ResultSet resultSet = session.execute(cql);
+		ResultSet resultSet = session.execute(queryVehicleSolr.bind(solr_query));
 
 		String result = resultSet.one().getString(0);
 		ObjectMapper mapper = new ObjectMapper();
@@ -183,7 +194,8 @@ public class VehicleDao {
 		List<String> vehicles = new ArrayList<String>();
 
 		try {
-			Map<String, Object> map = mapper.readValue(result, new TypeReference<Map<String, Object>>() {});
+			Map<String, Object> map = mapper.readValue(result, new TypeReference<Map<String, Object>>() {
+			});
 
 			Map<String, Integer> facets = (Map<String, Integer>) map.get("vehicle");
 
@@ -194,17 +206,14 @@ public class VehicleDao {
 				}
 			}
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 
 		List<ResultSetFuture> futures = new ArrayList<ResultSetFuture>();
 
 		for (String vehicle : vehicles) {
-
-			BoundStatement boundStatement = this.queryVehicleDate.bind(vehicle, dateFormatter.format(to.toDate()),
-					to.toDate());
-
+			Date date = to.toDate();
+			BoundStatement boundStatement = this.queryVehicleDate.bind(vehicle, dateFormatter.format(date), date);
 			futures.add(session.executeAsync(boundStatement));
 		}
 
@@ -213,27 +222,22 @@ public class VehicleDao {
 		ImmutableList<ListenableFuture<ResultSet>> inCompletionOrder = Futures.inCompletionOrder(futures);
 
 		for (ListenableFuture<ResultSet> future : futures) {
-
 			ResultSet rs = null;
 			try {
 				rs = future.get();
 			} catch (InterruptedException | ExecutionException e) {
 				e.printStackTrace();
 			}
-
-			List<Row> all = rs.all();
-
-			if (all.isEmpty()) {
+			if (rs == null) {
 				continue;
 			}
 
-			for (Row row : all) {
-
+			for (Row row : rs) {
 				Date date = row.getTimestamp("date");
 				String vehicleId = row.getString("vehicle");
 				Point lat_long = (Point) row.getObject("lat_long");
 				String tile = row.getString("tile");
-				
+
 				Double temperature = row.getDouble("temperature");
 				Double speed = row.getDouble("speed");
 				Map<String, Double> map = row.getMap("p_", String.class, Double.class);

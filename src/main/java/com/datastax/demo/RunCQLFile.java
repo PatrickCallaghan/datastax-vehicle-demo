@@ -49,7 +49,7 @@ public abstract class RunCQLFile {
 				continue;
 			}
 			
-			if (cql.toLowerCase().startsWith("drop")){
+			if (cql.toLowerCase().startsWith("drop") || cql.toLowerCase().startsWith("truncate")){
 				this.runAllowFail(cql);
 			}else{
 				this.run(cql);

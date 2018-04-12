@@ -1,62 +1,34 @@
 package com.datastax.demo.utils;
 
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.List;
 
 public class FileUtils {
 
 	private static final String RESOURCES_DIR = "src/main/resources";
 	public static List<String> readFileIntoList(String filename) {
-
-		List<String> fileList = new ArrayList<String>();
-		BufferedReader br = null;
-		File file = new File(RESOURCES_DIR, filename);
-
 		try {
-			String currentLine;
-			br = new BufferedReader(new FileReader(file));
-
-			while ((currentLine = br.readLine()) != null) {
-				fileList.add(currentLine);
-			}
+			return Files.readAllLines(Paths.get(RESOURCES_DIR, filename));
 		} catch (IOException e) {
 			e.printStackTrace();
-		} finally {
-			try {
-				if (br != null)
-					br.close();
-			} catch (IOException ex) {
-				ex.printStackTrace();
-			}			
 		}
-		return fileList;
+		return Collections.emptyList();
 	}
 	public static String readFileIntoString(String filename) {
-	
-		StringBuffer buffer = new StringBuffer();
-		BufferedReader br = null;
-		File file = new File(RESOURCES_DIR, filename);
-
-		try {
+		Path path = Paths.get(RESOURCES_DIR, filename);
+		StringBuilder buffer = new StringBuilder();
+		try (BufferedReader br = Files.newBufferedReader(path)) {
 			String currentLine;
-			br = new BufferedReader(new FileReader(file));
-
 			while ((currentLine = br.readLine()) != null) {
 				buffer.append(currentLine);
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
-		} finally {
-			try {
-				if (br != null)
-					br.close();
-			} catch (IOException ex) {
-				ex.printStackTrace();
-			}			
 		}
 		return buffer.toString();
 	}
