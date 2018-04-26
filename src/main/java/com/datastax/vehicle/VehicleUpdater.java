@@ -133,22 +133,22 @@ public class VehicleUpdater {
 	}
 
 	public void startVehicle(String vehicleId, DateTime date) {
-		logger.info("Starting Vehicle " + vehicleId + " at " + date.toString());
+		//logger.info("Starting Vehicle " + vehicleId + " at " + date.toString());
 		dao.insertVehicleStatus(vehicleId, date, VehicleStatus.DRIVING.getStatusValue());
 	}
 
 	public void stopVehicle(String vehicleId, DateTime date) {
-		logger.info("Stopping Vehicle " + vehicleId + " at " +date.toString());
+		//logger.info("Stopping Vehicle " + vehicleId + " at " +date.toString());
 		dao.insertVehicleStatus(vehicleId, date, VehicleStatus.STOPPED.getStatusValue());
 	}
 
 	public void startEngine(String vehicleId, DateTime date) {
-		logger.info("Starting engine of vehicle " + vehicleId + " at " +date.toString());
+		//logger.info("Starting engine of vehicle " + vehicleId + " at " +date.toString());
 		dao.insertVehicleStatus(vehicleId, date, EngineStatus.STARTED.getStatusValue());
 	}
 
 	public void stopEngine(String vehicleId, DateTime date) {
-		logger.info("Stopping engine of vehicle " + vehicleId + " at " +date.toString());
+		//logger.info("Stopping engine of vehicle " + vehicleId + " at " +date.toString());
 		dao.insertVehicleStatus(vehicleId, date, EngineStatus.STOPPED.getStatusValue());
 	}
 }
