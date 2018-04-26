@@ -27,4 +27,5 @@ public class Area {
     public void setCircle(Circle circle) {
         this.circle = circle;
     }
+
 }

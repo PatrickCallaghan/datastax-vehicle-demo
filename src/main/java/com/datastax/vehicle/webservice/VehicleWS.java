@@ -1,25 +1,18 @@
 package com.datastax.vehicle.webservice;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import javax.jws.WebService;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.ApplicationPath;
 
-import com.datastax.vehicle.VehicleDao;
 import com.datastax.vehicle.webservice.resources.*;
-import org.joda.time.DateTime;
+import com.datastax.vehicle.webservice.validation.ValidationOutcome;
+import com.datastax.vehicle.webservice.validation.WSInputValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.datastax.demo.utils.DateUtils;
-import com.datastax.vehicle.model.Vehicle;
-import com.github.davidmoten.geo.LatLong;
 
 @WebService
 @Path("/")
@@ -31,61 +24,65 @@ public class VehicleWS {
 	private VehicleService service = new VehicleService();
 
 	//Dates - 20160801-000000
-	@GET
-	@Path("/getmovements/{vehicle}/{date}")
-	@Produces(MediaType.APPLICATION_JSON)
-	public Response getMovementsForVehicle(@PathParam("vehicle") String vehicle, @PathParam("date") String dateString) {
-
-		List<Vehicle> result = service.getVehicleMovements(vehicle, dateString);
-
-		return Response.status(201).entity(result).build();
-	}
-
-	@GET
-	@Path("/getvehicles/{tile}")
-	@Produces(MediaType.APPLICATION_JSON)
-	public Response getVehiclesByTile(@PathParam("tile") String tile) {
-
-		List<Vehicle> result = service.getVehiclesByTile(tile);
-
-		return Response.status(201).entity(result).build();
-	}
-
-	@GET
-	@Path("/search/{lat}/{lon}/{distance}")
-	@Produces(MediaType.APPLICATION_JSON)
-	public Response searchForVehicles(@PathParam("lat") double lat, @PathParam("lon") double lon, @PathParam("distance") int distance) {
-
-		List<Vehicle> result = service.searchVehiclesByLonLatAndDistance(distance, new LatLong(lat, lon));
-
-		return Response.status(201).entity(result).build();
-	}
-
-	@GET
-	@Path("/getlastmovements/{fromdate}/{todate}")
-	@Produces(MediaType.APPLICATION_JSON)
-	public Response getLastMovements(@PathParam("fromdate") String fromDate, @PathParam("todate") String toDate) {
-
-		logger.info("GetLastMovements");
-		DateTime to = null;
-		DateTime from = null;
-		try {
-			to = DateUtils.parseDate(toDate);
-			from = DateUtils.parseDate(fromDate);
-		} catch (Exception e) {
-			e.printStackTrace();
-			return Response.status(400).entity("error in date format").build();
-		}
-
-		logger.info("Calling");
-		List<Vehicle> result = service.searchAreaTimeLastPosition(from, to);
-
-		return Response.status(201).entity(result).build();
-	}
+//	@GET
+//	@Path("/getmovements/{vehicle}/{date}")
+//	@Produces(MediaType.APPLICATION_JSON)
+//	public Response getMovementsForVehicle(@PathParam("vehicle") String vehicle, @PathParam("date") String dateString) {
+//
+//		List<Vehicle> result = service.getVehicleMovements(vehicle, dateString);
+//
+//		return Response.status(201).entity(result).build();
+//	}
+//
+//	@GET
+//	@Path("/getvehicles/{tile}")
+//	@Produces(MediaType.APPLICATION_JSON)
+//	public Response getVehiclesByTile(@PathParam("tile") String tile) {
+//
+//		List<Vehicle> result = service.getVehiclesByTile(tile);
+//
+//		return Response.status(201).entity(result).build();
+//	}
+//
+//	@GET
+//	@Path("/search/{lat}/{lon}/{distance}")
+//	@Produces(MediaType.APPLICATION_JSON)
+//	public Response searchForVehicles(@PathParam("lat") double lat, @PathParam("lon") double lon, @PathParam("distance") int distance) {
+//
+//		List<Vehicle> result = service.searchVehiclesByLonLatAndDistance(distance, new LatLong(lat, lon));
+//
+//		return Response.status(201).entity(result).build();
+//	}
+//
+//	@GET
+//	@Path("/getlastmovements/{fromdate}/{todate}")
+//	@Produces(MediaType.APPLICATION_JSON)
+//	public Response getLastMovements(@PathParam("fromdate") String fromDate, @PathParam("todate") String toDate) {
+//
+//		logger.info("GetLastMovements");
+//		DateTime to = null;
+//		DateTime from = null;
+//		try {
+//			to = DateUtils.parseDate(toDate);
+//			from = DateUtils.parseDate(fromDate);
+//		} catch (Exception e) {
+//			e.printStackTrace();
+//			return Response.status(400).entity("error in date format").build();
+//		}
+//
+//		logger.info("Calling");
+//		List<Vehicle> result = service.searchAreaTimeLastPosition(from, to);
+//
+//		return Response.status(201).entity(result).build();
+//	}
 
 	/*****************
 	 * New API calls
 	 ****************/
+
+	/**
+	 * TODO add validation of input parameters later
+	 */
 
 	//Two temporary test calls to check that everything is set up properly TODO remove these
 	@POST
@@ -125,8 +122,17 @@ public class VehicleWS {
 	@Path("/area/vehicles/readings/latest")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response retrieveLatestReadingOfVehicles(GlobalRequestInputWrapper inputWrapper) {
+
+		ValidationOutcome valOut = WSInputValidator.validateGlobalRequestInputWrapper(inputWrapper);
+
+		if ( !valOut.isValid() ) {
+			return Response.status(400).entity(valOut.getValidationMessagesAsSingleString()).build();
+		}
+
 		// Generate some stubbed data to get going for now - TODO this will change!
 		List<VehicleData> result = SampleWSDataGenerator.generateListfTwoVehicleDataWithOneReadingEach();
+
+		//List<VehicleData> result = service.retrieveLatestReadingOfVehicles(ar);
 		return Response.status(200).entity(result).build();
 	}
 
@@ -150,6 +156,12 @@ public class VehicleWS {
 	@Path("/area/vehicles/readings/all")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response retrieveAllReadingsOfVehicles(GlobalRequestInputWrapper inputWrapper) {
+
+		ValidationOutcome valOut = WSInputValidator.validateGlobalRequestInputWrapper(inputWrapper);
+
+		if ( !valOut.isValid() ) {
+			return Response.status(400).entity(valOut.getValidationMessagesAsSingleString()).build();
+		}
 
 		// Generate some stubbed data to get going for now - TODO this will change!
 		List<VehicleData> result = SampleWSDataGenerator.generateListfTwoVehicleDataWithThreeReadingsEach();
@@ -180,6 +192,12 @@ public class VehicleWS {
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response retrieveFilteredReadingsOfVehicles(GlobalRequestInputWrapper inputWrapper) {
 
+		ValidationOutcome valOut = WSInputValidator.validateGlobalRequestInputWrapper(inputWrapper);
+
+		if ( !valOut.isValid() ) {
+			return Response.status(400).entity(valOut.getValidationMessagesAsSingleString()).build();
+		}
+
 		// Generate some stubbed data to get going for now - TODO this will change!
 		List<VehicleData> result = SampleWSDataGenerator.generateListfTwoVehicleDataWithOneAndTwoReadings();
 
@@ -206,6 +224,12 @@ public class VehicleWS {
 	@Path("/vehicle/readings/latest")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response retrieveLatestReadingOfVehicle(VehicleRequestInputWrapper inputWrapper) {
+
+		ValidationOutcome valOut = WSInputValidator.validateVehicleRequestInputWrapper(inputWrapper);
+
+		if ( !valOut.isValid() ) {
+			return Response.status(400).entity(valOut.getValidationMessagesAsSingleString()).build();
+		}
 
 		// Generate some stubbed data to get going for now - TODO this will change!
 		VehicleData result = SampleWSDataGenerator.generateVehicleDataWithSingleReading();
@@ -235,6 +259,13 @@ public class VehicleWS {
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response retrieveAllReadingsOfVehicle(VehicleRequestInputWrapper inputWrapper) {
 
+		ValidationOutcome valOut = WSInputValidator.validateVehicleRequestInputWrapper(inputWrapper);
+
+		if ( !valOut.isValid() ) {
+			return Response.status(400).entity(valOut.getValidationMessagesAsSingleString()).build();
+		}
+
+
 		// Generate some stubbed data to get going for now - TODO this will change!
 		VehicleData result = SampleWSDataGenerator.generateVehicleDataWithThreeReadings();
 
@@ -263,6 +294,13 @@ public class VehicleWS {
 	@Path("/vehicle/readings/filtered")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response retrieveFilteredReadingsOfVehicle(VehicleRequestInputWrapper inputWrapper) {
+
+		ValidationOutcome valOut = WSInputValidator.validateVehicleRequestInputWrapper(inputWrapper);
+
+		if ( !valOut.isValid() ) {
+			return Response.status(400).entity(valOut.getValidationMessagesAsSingleString()).build();
+		}
+
 
 		// Generate some stubbed data to get going for now - TODO this will change!
 		VehicleData result = SampleWSDataGenerator.generateVehicleDataWithTwoReadings();
