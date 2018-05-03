@@ -1,6 +1,5 @@
 package com.datastax.vehicle.webservice;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import javax.jws.WebService;
@@ -8,6 +7,7 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import com.datastax.vehicle.service.VehicleService;
 import com.datastax.vehicle.webservice.resources.*;
 import com.datastax.vehicle.webservice.validation.ValidationOutcome;
 import com.datastax.vehicle.webservice.validation.WSInputValidator;
@@ -95,10 +95,10 @@ public class VehicleWS {
 	}
 
 	@POST
-	@Path("/hello/world/point")
+	@Path("/hello/world/geoPoint")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response helloWorldPoint(Point point) {
-		String result = "Hello world. This is the point. Lat " + point.getLatitude() + " long " + point.getLongitude();
+	public Response helloWorldPoint(GeoPoint geoPoint) {
+		String result = "Hello world. This is the geoPoint. Lat " + geoPoint.getLatitude() + " long " + geoPoint.getLongitude();
 		System.out.println(result);
 		return Response.status(201).entity(result).build();
 	}
@@ -124,16 +124,19 @@ public class VehicleWS {
 	public Response retrieveLatestReadingOfVehicles(GlobalRequestInputWrapper inputWrapper) {
 
 		ValidationOutcome valOut = WSInputValidator.validateGlobalRequestInputWrapper(inputWrapper);
-
 		if ( !valOut.isValid() ) {
 			return Response.status(400).entity(valOut.getValidationMessagesAsSingleString()).build();
 		}
 
-		// Generate some stubbed data to get going for now - TODO this will change!
-		List<VehicleData> result = SampleWSDataGenerator.generateListfTwoVehicleDataWithOneReadingEach();
+		List<VehicleData> result = null;
 
-		//List<VehicleData> result = service.retrieveLatestReadingOfVehicles(ar);
-		return Response.status(200).entity(result).build();
+		System.out.println("Web Service: Retrieving current vehicles in area...");
+		result = service.retrieveLatestReadingOfVehicles(
+									inputWrapper.getArea(), inputWrapper.getTimeframe(),
+									inputWrapper.getMeasurementSubset(), inputWrapper.getFilter());
+		System.out.println("Web Service: Current vehicles in area successfully retrieved. Size " + result.size());
+
+		return Response.status(201).entity(result).build();
 	}
 
 	/**

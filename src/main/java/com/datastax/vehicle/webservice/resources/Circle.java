@@ -2,16 +2,16 @@ package com.datastax.vehicle.webservice.resources;
 
 public class Circle {
 
-    private Point centre;
+    private GeoPoint centre;
     private Double radius;
 
     public Circle() { }
 
-    public Point getCentre() {
+    public GeoPoint getCentre() {
         return centre;
     }
 
-    public void setCentre(Point centre) {
+    public void setCentre(GeoPoint centre) {
         this.centre = centre;
     }
 
@@ -22,4 +22,5 @@ public class Circle {
     public void setRadius(Double radius) {
         this.radius = radius;
     }
+
 }

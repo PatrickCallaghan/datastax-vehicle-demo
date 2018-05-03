@@ -12,6 +12,14 @@ public class Area {
 
     public Area() { }
 
+    public Area(Polygon p) {
+        polygon = p;
+    }
+
+    public Area(Circle c) {
+        circle = c;
+    }
+
     public Polygon getPolygon() {
         return polygon;
     }
@@ -27,5 +35,10 @@ public class Area {
     public void setCircle(Circle circle) {
         this.circle = circle;
     }
+
+    public boolean isPolygon() {
+        return polygon != null;
+    }
+
 
 }

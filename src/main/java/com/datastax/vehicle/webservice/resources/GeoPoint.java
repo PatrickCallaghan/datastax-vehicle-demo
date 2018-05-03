@@ -1,13 +1,13 @@
 package com.datastax.vehicle.webservice.resources;
 
-public class Point {
+public class GeoPoint {
 
     private double latitude;
     private double longitude;
 
-    public Point() {}
+    public GeoPoint() {}
 
-    public Point(double latitude, double longitude) {
+    public GeoPoint(double latitude, double longitude) {
         this.latitude = latitude;
         this.longitude = longitude;
     }
@@ -27,4 +27,5 @@ public class Point {
     public void setLongitude(double longitude) {
         this.longitude = longitude;
     }
+
 }

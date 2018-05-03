@@ -3,6 +3,7 @@ package com.datastax.vehicle;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.datastax.vehicle.dao.VehicleDao;
 import com.datastax.vehicle.model.EngineStatus;
 import com.datastax.vehicle.model.VehicleStatus;
 import org.joda.time.DateTime;

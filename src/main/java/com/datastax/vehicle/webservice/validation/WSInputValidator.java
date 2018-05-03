@@ -5,9 +5,6 @@ import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 
-import java.util.ArrayList;
-import java.util.List;
-
 
 public class WSInputValidator {
 
@@ -84,7 +81,7 @@ public class WSInputValidator {
         }
 
         if ((polygon != null) &&
-                (polygon.getPoints() == null || polygon.getPoints().size() < 2)) {
+                (polygon.getGeoPoints() == null || polygon.getGeoPoints().size() < 2)) {
                 return "Polygon must contain at least two points";
         }
 

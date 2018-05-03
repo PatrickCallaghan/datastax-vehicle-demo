@@ -4,7 +4,7 @@ import org.joda.time.DateTime;
 import org.junit.Test;
 
 import com.datastax.vehicle.model.Vehicle;
-import com.datastax.vehicle.webservice.VehicleService;
+import com.datastax.vehicle.service.VehicleService;
 
 public class TestFacet {
 	
@@ -17,9 +17,9 @@ public class TestFacet {
 		
 		VehicleService service = new VehicleService();
 
-		List<Vehicle> vehicleMovements = service.searchAreaTimeLastPosition(from, to);
+		//List<Vehicle> vehicleMovements = service.searchAreaTimeLastPosition(from, to);
 		
-		System.out.println(vehicleMovements);
+		//System.out.println(vehicleMovements);
 	}
 	
 

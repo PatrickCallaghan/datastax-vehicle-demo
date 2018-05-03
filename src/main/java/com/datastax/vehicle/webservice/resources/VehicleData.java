@@ -16,6 +16,11 @@ public class VehicleData {
         this.readings = readings;
     }
 
+    public VehicleData(String vehicleId, Reading reading) {
+        this.vehicleId = vehicleId;
+        addReading(reading);
+    }
+
     public String getVehicleId() {
         return vehicleId;
     }
@@ -30,5 +35,9 @@ public class VehicleData {
 
     public void setReadings(List<Reading> readings) {
         this.readings = readings;
+    }
+
+    public void addReading(Reading reading) {
+        readings.add(reading);
     }
 }

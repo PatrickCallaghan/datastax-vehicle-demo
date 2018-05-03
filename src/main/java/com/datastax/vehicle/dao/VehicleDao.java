@@ -1,4 +1,4 @@
-package com.datastax.vehicle;
+package com.datastax.vehicle.dao;
 
 import java.io.IOException;
 import java.text.DateFormat;

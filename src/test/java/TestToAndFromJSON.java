@@ -2,7 +2,6 @@ import com.datastax.vehicle.webservice.resources.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Test;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -12,41 +11,10 @@ public class TestToAndFromJSON {
 
     @Test
     public void generateJSONListOfVehicleData1() throws Exception {
-        Point p11 = new Point(23.55, 43.71);
-        Map m11 = new HashMap();
-        m11.put("abc", "123");
-        m11.put("def", "456");
-        Reading r11 = new Reading(p11, "2018/04/25 12:08:43", m11);
 
-        Point p12 = new Point(23.55, 43.71);
-        Map m12 = new HashMap();
-        m12.put("cba", "321");
-        m12.put("fed", "654");
-        Reading r12 = new Reading(p12, "2018/04/25 12:09:22", m12);
+        VehicleData vd1 = SampleWSDataGenerator.generateVehicleDataWithTwoReadings();
 
-        List<Reading> rl1 = new ArrayList<>();
-        rl1.add(r11);
-        rl1.add(r12);
-
-        VehicleData vd1 = new VehicleData("vehicle1", rl1);
-
-        Point p21 = new Point(42.78, 23.16);
-        Map m21 = new HashMap();
-        m21.put("ghi", "789");
-        m21.put("jkl", "012");
-        Reading r21 = new Reading(p21, "2018/04/25 12:07:13", m21);
-
-        Point p22 = new Point(13.88, 61.53);
-        Map m22 = new HashMap();
-        m22.put("ihg", "987");
-        m22.put("lkj", "210");
-        Reading r22 = new Reading(p12, "2018/04/25 12:07:55", m22);
-
-        List<Reading> rl2 = new ArrayList<>();
-        rl2.add(r21);
-        rl2.add(r22);
-
-        VehicleData vd2 = new VehicleData("vehicle2", rl2);
+        VehicleData vd2 = SampleWSDataGenerator.generateVehicleDataWithThreeReadings();
 
         List<VehicleData> vdList = new ArrayList<>();
         vdList.add(vd1);
@@ -62,7 +30,7 @@ public class TestToAndFromJSON {
 
     @Test
     public void generatePoint() throws Exception{
-        Point pt1 = new Point(42.78, 23.16);
+        GeoPoint pt1 = new GeoPoint(42.78, 23.16);
         ObjectMapper mapper = new ObjectMapper();
 
         String resultAsString = mapper.writeValueAsString(pt1);
@@ -71,7 +39,7 @@ public class TestToAndFromJSON {
     }
 
     /**
-     * Area with two points
+     * Area
      * Timeframe
      **/
     @Test
@@ -79,18 +47,9 @@ public class TestToAndFromJSON {
 
         GlobalRequestInputWrapper iw = new GlobalRequestInputWrapper();
 
-        Point pt1 = new Point(42.78, 23.16);
-        Point pt2 = new Point(11.29, 26.89);
-
-        Polygon p = new Polygon();
-        p.addPoints(pt1, pt2);
-
-        Area a = new Area();
-        a.setPolygon(p);
-
         Timeframe t = new Timeframe("2018/04/23 12:07:55", "2018/04/25 13:19:21");
 
-        iw.setArea(a);
+        iw.setArea(createArea());
         iw.setTimeframe(t);
 
         ObjectMapper mapper = new ObjectMapper();
@@ -103,7 +62,7 @@ public class TestToAndFromJSON {
 
 
     /**
-     * Area with three points
+     * Area
      * Timeframe with start and end
      * Measurement subset with four measurements
      **/
@@ -112,19 +71,9 @@ public class TestToAndFromJSON {
 
         GlobalRequestInputWrapper iw = new GlobalRequestInputWrapper();
 
-        Point pt1 = new Point(42.78, 23.16);
-        Point pt2 = new Point(11.29, 26.89);
-        Point pt3 = new Point(31.44, 27.55);
-
-        Polygon p = new Polygon();
-        p.addPoints(pt1, pt2, pt3);
-
-        Area a = new Area();
-        a.setPolygon(p);
-
         Timeframe t = new Timeframe("2018/04/23 11:17:52", "2018/04/25 09:22:25");
 
-        iw.setArea(a);
+        iw.setArea(createArea());
         iw.setTimeframe(t);
 
         MeasurementSubset ms = new MeasurementSubset();
@@ -143,7 +92,7 @@ public class TestToAndFromJSON {
 
 
     /**
-     * Area with three points
+     * Area
      * Timeframe with start and end
      * Measurement subset with four measurements
      * Order descending
@@ -154,14 +103,7 @@ public class TestToAndFromJSON {
 
         GlobalRequestInputWrapper iw = new GlobalRequestInputWrapper();
 
-        Point pt1 = new Point(42.78, 23.16);
-        Point pt2 = new Point(11.29, 26.89);
-        Point pt3 = new Point(31.44, 27.55);
-        Polygon p = new Polygon();
-        p.addPoints(pt1, pt2, pt3);
-        Area a = new Area();
-        a.setPolygon(p);
-        iw.setArea(a);
+        iw.setArea(createArea());
 
         Timeframe t = new Timeframe("2018/04/23 11:17:52", "2018/04/25 09:22:25");
         iw.setTimeframe(t);
@@ -176,6 +118,34 @@ public class TestToAndFromJSON {
         iw.setOrder(o);
 
         String f = "some valid search filter";
+        iw.setFilter(f);
+
+        ObjectMapper mapper = new ObjectMapper();
+
+        String resultAsString = mapper.writeValueAsString(iw);
+
+        System.out.println(resultAsString);
+
+    }
+
+    /**
+     * Area
+     * No timeframe
+     * Measurement subset with all measurements
+     * Filter with something
+     **/
+    @Test
+    public void generateGlobalRequestInputWrapper4() throws Exception{
+
+        GlobalRequestInputWrapper iw = new GlobalRequestInputWrapper();
+
+        iw.setArea(createArea());
+
+        MeasurementSubset ms = new MeasurementSubset();
+        ms.setAllMeasurements(true);
+        iw.setMeasurementSubset(ms);
+
+        String f = "speed:[20 TO 40]";
         iw.setFilter(f);
 
         ObjectMapper mapper = new ObjectMapper();
@@ -201,11 +171,11 @@ public class TestToAndFromJSON {
 
         iw.setVehicleId("vehicle12345");
 
-        Point pt1 = new Point(42.78, 23.16);
-        Point pt2 = new Point(11.29, 26.89);
-        Point pt3 = new Point(31.44, 27.55);
+        GeoPoint pt1 = new GeoPoint(42.78, 23.16);
+        GeoPoint pt2 = new GeoPoint(11.29, 26.89);
+        GeoPoint pt3 = new GeoPoint(31.44, 27.55);
         Polygon p = new Polygon();
-        p.addPoints(pt1, pt2, pt3);
+        p.addGeoPoints(pt1, pt2, pt3);
         Area a = new Area();
         a.setPolygon(p);
         iw.setArea(a);
@@ -231,5 +201,19 @@ public class TestToAndFromJSON {
 
         System.out.println(resultAsString);
 
+    }
+
+    private Area createArea() {
+        GeoPoint pt1 = new GeoPoint(48.736989, 10.271339);
+        GeoPoint pt2 = new GeoPoint(48.067576, 11.609030);
+        GeoPoint pt3 = new GeoPoint(48.774243, 12.913120);
+        GeoPoint pt4 = new GeoPoint(49.595759, 11.123788);
+        GeoPoint pt5 = new GeoPoint(48.736989, 10.271339);
+        Polygon p = new Polygon();
+        p.addGeoPoints(pt1, pt2, pt3, pt4, pt5);
+        Area a = new Area();
+        a.setPolygon(p);
+
+        return a;
     }
 }

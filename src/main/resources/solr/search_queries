@@ -16,32 +16,32 @@ SELECT * FROM datastax.current_location where  solr_query='{"q":"speed:[180 TO 2
 // Top 5 most "populated" tiles in this moment
 SELECT * FROM datastax.current_location where  solr_query='{"q":"*:*","facet":{"field":"tile1", "limit":"5"}}';
 
-//Find number of data points within .3 degrees of a point in the whole timespan for which we have data
+//Find number of data geoPoints within .3 degrees of a geoPoint in the whole timespan for which we have data
 select count(*) from datastax.vehicle where solr_query = '{"q": "*:*", "fq": "lat_long:\"IsWithin(BUFFER(POINT(47.310179325765915 11.25321866241), .3))\""}' ;
 
-//Find number of data points within .3 degrees of a point within a given time frame
+//Find number of data geoPoints within .3 degrees of a geoPoint within a given time frame
 select count(*) from datastax.vehicle where solr_query = '{"q": "*:*", "fq": "date:[2018-03-30T12:32:00.000Z TO 2018-03-30T14:45:00.000Z] AND lat_long:\"IsWithin(BUFFER(POINT(47.310179325765915 11.25321866241), .3))\""}' ;
 
-//Find number of data points within .3 degrees of a point within a given time frame and with a measurement within a range
+//Find number of data geoPoints within .3 degrees of a geoPoint within a given time frame and with a measurement within a range
 select count(*) from datastax.vehicle where solr_query = '{"q": "speed:[150 TO 200]", "fq": "date:[2018-03-30T12:32:00.000Z TO 2018-03-30T14:45:00.000Z] AND lat_long:\"IsWithin(BUFFER(POINT(47.310179325765915 11.25321866241), .3))\""}' ;
 
-//Find all data points within .3 degrees of a point within a given time frame and with a measurement within a range
+//Find all data geoPoints within .3 degrees of a geoPoint within a given time frame and with a measurement within a range
 select * from datastax.vehicle where solr_query = '{"q": "speed:[150 TO 200]", "fq": "date:[2018-03-30T12:32:00.000Z TO 2018-03-30T14:45:00.000Z] AND lat_long:\"IsWithin(BUFFER(POINT(47.310179325765915 11.25321866241), .3))\""}' ;
 
-//Find all data points within a certain radius of a point within a given time frame and with two measurements within a range
+//Find all data geoPoints within a certain radius of a geoPoint within a given time frame and with two measurements within a range
 select * from datastax.vehicle where solr_query = '{"q": "speed:[150 TO 200] AND temperature:[50 TO 75]", "fq": "date:[2018-03-30T12:32:00.000Z TO 2018-03-30T14:45:00.000Z] AND lat_long:\"IsWithin(BUFFER(POINT(47.310179325765915 11.25321866241), .3))\""}' ;
 
-//Find all data points within a certain radius of a point within a given time frame and with two measurements within a range, one of which is from the map
+//Find all data geoPoints within a certain radius of a geoPoint within a given time frame and with two measurements within a range, one of which is from the map
 select * from datastax.vehicle where solr_query = '{"q": "speed:[150 TO 200] AND p_Torque:[10 TO 45]", "fq": "date:[2018-03-30T12:32:00.000Z TO 2018-03-30T14:45:00.000Z] AND lat_long:\"IsWithin(BUFFER(POINT(47.310179325765915 11.25321866241), .3))\""}' ;
 
 //Status for a particular car on a day. Pick its last journey
 // We are going to add the location in the status table so we can easily retrieve where the car started and stopped to reconstruct the journey
 select * from datastax.vehicle_status where vehicle='98' and day = '20180402';
 
-//How many points for the journey identified above
+//How many geoPoints for the journey identified above
 select count(*) from datastax.vehicle where solr_query = '{"q": "vehicle:98", "fq": "date:[2018-04-02T03:59:27.000Z TO 2018-04-02T04:45:27.000Z]"}';
 
-//All points for that journey.
+//All geoPoints for that journey.
 select * from datastax.vehicle where solr_query = '{"q": "vehicle:98", "fq": "date:[2018-04-02T03:59:27.000Z TO 2018-04-02T04:45:27.000Z]"}';
 
 //Given a timeframe and a geographical area, find the most recent position within that timeframe of all vehicles that were in that area and in that timeframe
