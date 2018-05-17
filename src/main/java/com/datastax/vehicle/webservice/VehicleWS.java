@@ -128,10 +128,8 @@ public class VehicleWS {
 			return Response.status(400).entity(valOut.getValidationMessagesAsSingleString()).build();
 		}
 
-		List<VehicleData> result = null;
-
 		System.out.println("Web Service: Retrieving current vehicles in area...");
-		result = service.retrieveLatestReadingOfVehicles(
+		List<VehicleData> result = service.retrieveLatestReadingOfVehicles(
 									inputWrapper.getArea(), inputWrapper.getTimeframe(),
 									inputWrapper.getMeasurementSubset(), inputWrapper.getFilter());
 		System.out.println("Web Service: Current vehicles in area successfully retrieved. Size " + result.size());

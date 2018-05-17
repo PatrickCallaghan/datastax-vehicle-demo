@@ -7,24 +7,27 @@ The application
 
 1. Allows the user to track a vehicles movements per day.
 
-2. Find all vehicles per tile. Tiles have 2 sizes. Tile1 is large, Tile2 is small. 
+2. Finds all vehicles per tile. Tiles have 2 sizes. Tile1 is large, Tile2 is small. 
 
-3. Find all vehicles within a given radius of any vehicle
+3. Finds all vehicles within a given radius of any vehicle
 
-To specify contact points use the contactPoints command line parameter e.g. '-DcontactPoints=192.168.25.100,192.168.25.101'
-The contact points can take mulitple points in the IP,IP,IP (no spaces).
+The application must connect to a DSE cluster with Search enabled and on which the JTS library has been added.
+To do so, do the following steps on each node running Search:
+
+1. Stop DSE.
  
-To create the schema, run the following
+2. Download the jar from https://mvnrepository.com/artifact/com.vividsolutions/jts-core/1.14.0
 
-	mvn clean compile exec:java -Dexec.mainClass="com.datastax.demo.SchemaSetup" -DcontactPoints=localhost
-	
-To create the solr core, run 
+3. Drop it in the directory dse/resources/solr/lib dir
 
-	dsetool create_core datastax.current_location reindex=true schema=src/main/resources/solr/geo.xml solrconfig=src/main/resources/solr/solrconfig.xml
+4. Restart DSE. 
 
-If you want to also query on where vehicles where at a certain time. 
+To specify contact geoPoints use the contactPoints command line parameter e.g. '-DcontactPoints=192.168.25.100,192.168.25.101'
+The contact geoPoints can take multiple geoPoints in the IP,IP,IP (no spaces).
+ 
+To create the schema (including search indexes), run the following
 
-	dsetool create_core datastax.vehicle reindex=true schema=src/main/resources/solr/geo_vehicle.xml solrconfig=src/main/resources/solr/solrconfig.xml	
+	mvn clean compile exec:java -Dexec.mainClass="com.datastax.demo.SchemaSetup" -DcontactPoints=localhost	
 	
 To continuously update the locations of the vehicles run 
 	

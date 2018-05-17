@@ -13,6 +13,20 @@ create table if not exists current_location(
 	p_ map<text,double>
 ) WITH compaction = { 'class' :  'LeveledCompactionStrategy'  };
 
+CREATE SEARCH INDEX ON current_location WITH COLUMNS date, speed, p_, temperature AND OPTIONS {reindex: false, lenient: true};
+
+ALTER SEARCH INDEX SCHEMA ON current_location ADD types.fieldtype[@class='solr.TextField', @name='text'] WITH '{"analyzer":{"tokenizer":{"class":"solr.StandardTokenizerFactory"}}}';
+ALTER SEARCH INDEX SCHEMA ON current_location ADD types.fieldtype[@class='solr.SpatialRecursivePrefixTreeFieldType',
+      @name='rpt', @distanceUnits='kilometers', @geo='true',
+      @spatialContextFactory='org.locationtech.spatial4j.context.jts.JtsSpatialContextFactory'];
+
+ALTER SEARCH INDEX SCHEMA ON current_location SET fields.field[@name='vehicle'] @docValues='true';
+ALTER SEARCH INDEX SCHEMA ON current_location ADD fields.field[@name='lat_long', @type='rpt', @indexed='true', @stored='true', @multiValued='false'];
+ALTER SEARCH INDEX SCHEMA ON current_location ADD fields.field[@name='tile1', @type='text', @indexed='true', @stored='true', @multiValued='false', @docValues='true'];
+ALTER SEARCH INDEX SCHEMA ON current_location ADD fields.field[@name='tile2', @type='text', @indexed='true', @stored='true', @multiValued='false', @docValues='true'];
+RELOAD SEARCH INDEX ON current_location;
+
+
 create table if not exists vehicle(
 	vehicle text,
 	day text,
@@ -25,6 +39,17 @@ create table if not exists vehicle(
 	PRIMARY KEY ((vehicle,day), date)
 ) with clustering order by (date desc);
 
+CREATE SEARCH INDEX ON vehicle WITH COLUMNS speed, p_, temperature AND OPTIONS {reindex: false, lenient: true};
+ALTER SEARCH INDEX SCHEMA ON vehicle ADD types.fieldtype[@class='solr.TextField', @name='text'] WITH '{"analyzer":{"tokenizer":{"class":"solr.StandardTokenizerFactory"}}}';
+ALTER SEARCH INDEX SCHEMA ON vehicle ADD types.fieldtype[@class='solr.SpatialRecursivePrefixTreeFieldType', @name='rpt', @distanceUnits='kilometers',
+                                                            @geo='true', @spatialContextFactory='org.locationtech.spatial4j.context.jts.JtsSpatialContextFactory'];
+
+ALTER SEARCH INDEX SCHEMA ON vehicle SET fields.field[@name='vehicle'] @docValues='true';
+ALTER SEARCH INDEX SCHEMA ON vehicle ADD fields.field[@name='lat_long', @type='rpt', @indexed='true', @stored='true', @multiValued='false'];
+ALTER SEARCH INDEX SCHEMA ON current_location ADD fields.field[@name='tile', @type='text', @indexed='true', @stored='true', @multiValued='false', @docValues='true'];
+RELOAD SEARCH INDEX ON vehicle;
+
+
 create table if not exists vehicle_status (
     vehicle text,
     day text,
@@ -32,7 +57,6 @@ create table if not exists vehicle_status (
     vehicle_state text,
     PRIMARY KEY ((vehicle, day), state_change_time)
 ) with clustering order by (state_change_time desc);
-
 
 truncate current_location;
 truncate vehicle;
