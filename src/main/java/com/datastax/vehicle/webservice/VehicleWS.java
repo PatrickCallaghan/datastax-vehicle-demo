@@ -16,6 +16,8 @@ import org.slf4j.LoggerFactory;
 
 @WebService
 @Path("/")
+@Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
 public class VehicleWS {
 
 	private static Logger logger = LoggerFactory.getLogger(VehicleWS.class);
@@ -87,7 +89,6 @@ public class VehicleWS {
 	//Two temporary test calls to check that everything is set up properly TODO remove these
 	@POST
 	@Path("/hello/world")
-	@Produces(MediaType.APPLICATION_JSON)
 	public Response helloWorldPost() {
 		String result = "Hello world ";
 		System.out.println(result);
@@ -96,9 +97,8 @@ public class VehicleWS {
 
 	@POST
 	@Path("/hello/world/geoPoint")
-	@Produces(MediaType.APPLICATION_JSON)
 	public Response helloWorldPoint(GeoPoint geoPoint) {
-		String result = "Hello world. This is the geoPoint. Lat " + geoPoint.getLatitude() + " long " + geoPoint.getLongitude();
+		String result = "Hello world. This is the geoPoint. Lat " + geoPoint.getLat() + " long " + geoPoint.getLng();
 		System.out.println(result);
 		return Response.status(201).entity(result).build();
 	}
@@ -123,13 +123,13 @@ public class VehicleWS {
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response retrieveLatestReadingOfVehicles(GlobalRequestInputWrapper inputWrapper) {
 
-		ValidationOutcome valOut = WSInputValidator.validateGlobalRequestInputWrapper(inputWrapper);
+		ValidationOutcome valOut = WSInputValidator.validateGlobalRequestInputWrapper(inputWrapper, false);
 		if ( !valOut.isValid() ) {
 			return Response.status(400).entity(valOut.getValidationMessagesAsSingleString()).build();
 		}
 
 		System.out.println("Web Service: Retrieving current vehicles in area...");
-		List<VehicleData> result = service.retrieveLatestReadingOfVehicles(
+		List<VehicleReading> result = service.retrieveLatestReadingOfVehicles(
 									inputWrapper.getArea(), inputWrapper.getTimeframe(),
 									inputWrapper.getMeasurementSubset(), inputWrapper.getFilter());
 		System.out.println("Web Service: Current vehicles in area successfully retrieved. Size " + result.size());
@@ -146,64 +146,36 @@ public class VehicleWS {
 	 *   - Timeframe: mandatory. Cannot be a single point in time (i.e. start time must be < end time, or end time can be null)
 	 *   - MeasurementSubset: optional. If specified, it defines what measurements should be returned for each reading
 	 *   - Order: optional. Passed only if the readings should be time-ordered and specifies how.
+	 *   - Filter: optional. Just a Search snippet defining the custom filtering logic. It contains conditions on one or more properties
 	 *
 	 * @return a list of VehicleData objects
-	 * The route of each vehicle in the area and timeframe. This means all the readings that were recorded for each vehicle,
-	 * grouped by vehicle and ordered by time ascending or descending or not ordered at all (according to the flag).
-	 * Each reading will always contain position and timestamp and may optionally contain measurements (if requested) as key-value pairs
-	 *
-	 */
-	@POST
-	@Path("/area/vehicles/readings/all")
-	@Produces(MediaType.APPLICATION_JSON)
-	public Response retrieveAllReadingsOfVehicles(GlobalRequestInputWrapper inputWrapper) {
-
-		ValidationOutcome valOut = WSInputValidator.validateGlobalRequestInputWrapper(inputWrapper);
-
-		if ( !valOut.isValid() ) {
-			return Response.status(400).entity(valOut.getValidationMessagesAsSingleString()).build();
-		}
-
-		// Generate some stubbed data to get going for now - TODO this will change!
-		List<VehicleData> result = SampleWSDataGenerator.generateListfTwoVehicleDataWithThreeReadingsEach();
-
-		return Response.status(201).entity(result).build();
-	}
-
-
-	/**
-	 * Get the readings of each vehicle that was in the selected area within the timefram.
-	 * This is basically the portion of the route of each vehicle within the area and timeframe, with optional measurements
-	 *
-	 * Input is a GlobalRequestInputWrapper containing:
-	 *   - Area: mandatory. It can be a polygon or a circle.
-	 *   - Timeframe: mandatory. Cannot be a single point in time (i.e. start time must be < end time, or end time can be null)
-	 *   - MeasurementSubset: optional. If specified, it defines what measurements should be returned for each reading
-	 *   - Order: optional. Passed only if the readings should be time-ordered and specifies how.
-	 *   - Filter is just a Search snippet defining the custom filtering logic. It contains conditions on one or more properties
-	 *
-	 * @return* @return a list of VehicleData objects
 	 * All readings matching the filter that were recorded for each vehicle in the area and timeframe,
 	 * grouped by vehicle and ordered by time ascending or descending or not ordered at all (according to the flag).
 	 * Each reading will always contain position and timestamp and may optionally contain measurements (if requested) as key-value pairs.
 	 *
 	 */
 	@POST
-	@Path("/area/vehicles/readings/filtered")
-	@Produces(MediaType.APPLICATION_JSON)
-	public Response retrieveFilteredReadingsOfVehicles(GlobalRequestInputWrapper inputWrapper) {
+	@Path("/area/vehicles/readings/history")
+	public Response retrieveHistoricalReadingsOfVehicles(GlobalRequestInputWrapper inputWrapper) {
 
-		ValidationOutcome valOut = WSInputValidator.validateGlobalRequestInputWrapper(inputWrapper);
+		ValidationOutcome valOut = WSInputValidator.validateGlobalRequestInputWrapper(inputWrapper, true);
 
 		if ( !valOut.isValid() ) {
 			return Response.status(400).entity(valOut.getValidationMessagesAsSingleString()).build();
 		}
 
-		// Generate some stubbed data to get going for now - TODO this will change!
-		List<VehicleData> result = SampleWSDataGenerator.generateListfTwoVehicleDataWithOneAndTwoReadings();
+		System.out.println("Web Service: Retrieving all readings of all vehicles in area...");
+		List<VehicleReading> result = service.retrieveHistoricalReadingsOfVehicles(
+									inputWrapper.getArea(), inputWrapper.getTimeframe(),
+									inputWrapper.getMeasurementSubset(),
+									inputWrapper.getFilter(), inputWrapper.getOrder());
+		System.out.println("Web Service: All readings of all vehicles in area successfully retrieved. Size " + result.size());
 
 		return Response.status(201).entity(result).build();
+		//return null;
+
 	}
+
 
 	/**** By vehicle ****/
 
@@ -223,7 +195,6 @@ public class VehicleWS {
 	 */
 	@POST
 	@Path("/vehicle/readings/latest")
-	@Produces(MediaType.APPLICATION_JSON)
 	public Response retrieveLatestReadingOfVehicle(VehicleRequestInputWrapper inputWrapper) {
 
 		ValidationOutcome valOut = WSInputValidator.validateVehicleRequestInputWrapper(inputWrapper);
@@ -233,7 +204,7 @@ public class VehicleWS {
 		}
 
 		// Generate some stubbed data to get going for now - TODO this will change!
-		VehicleData result = SampleWSDataGenerator.generateVehicleDataWithSingleReading();
+		VehicleReading result = SampleWSDataGenerator.generateSingleVehicleReading();
 
 		return Response.status(201).entity(result).build();
 	}
@@ -248,16 +219,16 @@ public class VehicleWS {
 	 *   - Timeframe: mandatory and cannot be a single point in time (i.e. start time must be < end time, or end time can be null)
 	 *   - MeasurementSubset: optional. If specified, it defines what measurements should be returned for each reading
 	 *   - Order: optional. Passed only if the readings should be time-ordered and specifies how.
+	 *   - Filter: optional. Just a Search snippet defining the custom filtering logic. It contains conditions on one or more properties
 	 *
 	 * @return a VehicleData object
-	 * The route of the vehicle in the area and timeframe. This means all the readings that were recorded for that vehicle,
+	 * All readings matching the filter that were recorded for the vehicle in the area and timeframe,
 	 * ordered by time ascending or descending or not ordered at all (according to the flag).
-	 * Each reading will always contain position and timestamp and may optionally contain measurements (if requested) as key-value pairs
+	 * Each reading will always contain position and timestamp and may optionally contain measurements (if requested) as key-value pairs.
 	 *
 	 */
 	@POST
-	@Path("/vehicle/readings/all")
-	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/vehicle/readings/history")
 	public Response retrieveAllReadingsOfVehicle(VehicleRequestInputWrapper inputWrapper) {
 
 		ValidationOutcome valOut = WSInputValidator.validateVehicleRequestInputWrapper(inputWrapper);
@@ -268,46 +239,10 @@ public class VehicleWS {
 
 
 		// Generate some stubbed data to get going for now - TODO this will change!
-		VehicleData result = SampleWSDataGenerator.generateVehicleDataWithThreeReadings();
+		List<VehicleReading> result = SampleWSDataGenerator.generateListOfOneVehiclesWithTwoReadings();
 
 		return Response.status(201).entity(result).build();
 	}
 
-	/**
-	 * Get the readings of the requested vehicle in the selected area within the timeframe.
-	 * This is basically the portion of the route of the vehicle within the area and timeframe, with optional measurements
-	 *
-	 * Input is a VehicleRequestInputWrapper containing:
-	 *   - VehicleID: mandatory.
-	 *   - Area: mandatory. It can be a polygon or a circle.
-	 *   - Timeframe: mandatory and cannot be a single point in time (i.e. start time must be < end time, or end time can be null)
-	 *   - MeasurementSubset is optional. If specified, it defines what measurements should be returned for each reading
-	 *   - Order: optional. Passed only if the readings should be time-ordered and specifies how.
-	 *   - Filter is just a Search snippet defining the custom filtering logic. It contains conditions on one or more properties
-	 *
-	 * @return a VehicleData object
-	 * All readings matching the filter that were recorded for the vehicle in the area and timeframe,
-	 * ordered by time ascending or descending or not ordered at all (according to the flag).
-	 * Each reading will always contain position and timestamp and may optionally contain measurements (if requested) as key-value pairs.
-	 *
-	 */
-	@POST
-	@Path("/vehicle/readings/filtered")
-	@Produces(MediaType.APPLICATION_JSON)
-	public Response retrieveFilteredReadingsOfVehicle(VehicleRequestInputWrapper inputWrapper) {
-
-		ValidationOutcome valOut = WSInputValidator.validateVehicleRequestInputWrapper(inputWrapper);
-
-		if ( !valOut.isValid() ) {
-			return Response.status(400).entity(valOut.getValidationMessagesAsSingleString()).build();
-		}
-
-
-		// Generate some stubbed data to get going for now - TODO this will change!
-		VehicleData result = SampleWSDataGenerator.generateVehicleDataWithTwoReadings();
-
-		return Response.status(201).entity(result).build();
-	}
-
-
+	// TODO add API for heatmap
 }

@@ -10,25 +10,6 @@ import java.util.Map;
 public class TestToAndFromJSON {
 
     @Test
-    public void generateJSONListOfVehicleData1() throws Exception {
-
-        VehicleData vd1 = SampleWSDataGenerator.generateVehicleDataWithTwoReadings();
-
-        VehicleData vd2 = SampleWSDataGenerator.generateVehicleDataWithThreeReadings();
-
-        List<VehicleData> vdList = new ArrayList<>();
-        vdList.add(vd1);
-        vdList.add(vd2);
-
-        ObjectMapper mapper = new ObjectMapper();
-
-        String resultAsString = mapper.writeValueAsString( vdList);
-
-        System.out.println(resultAsString);
-
-    }
-
-    @Test
     public void generatePoint() throws Exception{
         GeoPoint pt1 = new GeoPoint(42.78, 23.16);
         ObjectMapper mapper = new ObjectMapper();
@@ -64,21 +45,20 @@ public class TestToAndFromJSON {
     /**
      * Area
      * Timeframe with start and end
-     * Measurement subset with four measurements
+     * Measurement subset with two measurements
      **/
     @Test
     public void generateGlobalRequestInputWrapper2() throws Exception{
 
         GlobalRequestInputWrapper iw = new GlobalRequestInputWrapper();
 
-        Timeframe t = new Timeframe("2018/04/23 11:17:52", "2018/04/25 09:22:25");
+        Timeframe t = new Timeframe("2018/05/18 01:17:52", "2018/05/18 23:22:25");
 
         iw.setArea(createArea());
         iw.setTimeframe(t);
 
         MeasurementSubset ms = new MeasurementSubset();
-        ms.setAllMeasurements(false);
-        ms.includeMeasurements("meas1", "meas2", "meas3", "meas4");
+        ms.includeMeasurements("speed", "temperature");
 
         iw.setMeasurementSubset(ms);
 
@@ -109,7 +89,6 @@ public class TestToAndFromJSON {
         iw.setTimeframe(t);
 
         MeasurementSubset ms = new MeasurementSubset();
-        ms.setAllMeasurements(false);
         ms.includeMeasurements("meas1", "meas2", "meas3", "meas4");
         iw.setMeasurementSubset(ms);
 
@@ -142,7 +121,6 @@ public class TestToAndFromJSON {
         iw.setArea(createArea());
 
         MeasurementSubset ms = new MeasurementSubset();
-        ms.setAllMeasurements(true);
         iw.setMeasurementSubset(ms);
 
         String f = "speed:[20 TO 40]";
@@ -184,7 +162,6 @@ public class TestToAndFromJSON {
         iw.setTimeframe(t);
 
         MeasurementSubset ms = new MeasurementSubset();
-        ms.setAllMeasurements(false);
         ms.includeMeasurements("meas1", "meas2", "meas3", "meas4");
         iw.setMeasurementSubset(ms);
 

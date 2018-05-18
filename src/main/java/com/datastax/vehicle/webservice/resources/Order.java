@@ -7,6 +7,11 @@ public class Order {
     public Order() {
     }
 
+    public Order(boolean ascending) {
+        this.ascending = ascending;
+    }
+
+
     public boolean isAscending() {
         return ascending;
     }

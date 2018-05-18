@@ -1,8 +1,5 @@
-import com.datastax.demo.utils.SolrFormatter;
-import com.datastax.vehicle.webservice.resources.Area;
-import com.datastax.vehicle.webservice.resources.GeoPoint;
-import com.datastax.vehicle.webservice.resources.MeasurementSubset;
-import com.datastax.vehicle.webservice.resources.Polygon;
+import com.datastax.demo.utils.SearchFormatter;
+import com.datastax.vehicle.webservice.resources.*;
 import org.junit.Test;
 
 public class TestSolrQuerySyntax {
@@ -10,14 +7,14 @@ public class TestSolrQuerySyntax {
     @Test
     public void testSolrStringCurrentReadingsPerArea() throws Exception {
 
-
-        String areaString = SolrFormatter.formatAreaAsSolrString(createArea());
-        String selectedColumns = SolrFormatter.formatMeasurementsAsSolrString(createMeasurementsforAll());
+        String areaString = SearchFormatter.formatAreaAsSearchString(createArea());
+        String selectedColumns = SearchFormatter.formatMeasurementsAsSearchString(createMeasurementsforAll());
+        String emptyFilterString = SearchFormatter.formatFilterAsSearchString("");
 
         StringBuilder cql = new StringBuilder("SELECT ").append(selectedColumns)
                 .append(" FROM datastax.current_location WHERE solr_query = '{\"q\":\"lat_long:\\\"isWithin( ")
                 .append(areaString)
-                .append(" )\\\"\"}'");
+                .append(" )\\\"").append(emptyFilterString).append("\"}' LIMIT 3");
 
         System.out.println(cql);
     }
@@ -26,9 +23,9 @@ public class TestSolrQuerySyntax {
     public void testSolrStringCurrentReadingsPerAreaWithFilter() throws Exception {
 
 
-        String areaString = SolrFormatter.formatAreaAsSolrString(createArea());
-        String selectedColumns = SolrFormatter.formatMeasurementsAsSolrString(createMeasurementsforAll());
-        String filterString = SolrFormatter.formatFilterAsSolrString("speed:[20 TO 40]");
+        String areaString = SearchFormatter.formatAreaAsSearchString(createArea());
+        String selectedColumns = SearchFormatter.formatMeasurementsAsSearchString(createMeasurementsforAll());
+        String filterString = SearchFormatter.formatFilterAsSearchString("speed:[20 TO 40]");
 
 //        StringBuilder cql = new StringBuilder("SELECT ").append(selectedColumns)
 //                .append(" FROM datastax.current_location WHERE solr_query = '{\"q\":\"lat_long:\\\"isWithin( ")
@@ -41,6 +38,43 @@ public class TestSolrQuerySyntax {
                 .append(" )\\\"").append(filterString).append("\"}' LIMIT 3");
 
         System.out.println(cql);
+    }
+
+    @Test
+    public void testSolrStringHistoricalReadingsPerAreaAndTimeframe() {
+
+        String areaString = SearchFormatter.formatAreaAsSearchString(createArea());
+        String timeframeString = SearchFormatter.formatTimeframeAsSearchString(createTimeframe());
+        String selectedColumnsString = SearchFormatter.formatMeasurementsAsSearchString(createMeasurementsforAll());
+        String emptyFilterString = SearchFormatter.formatFilterAsSearchString("");
+        String noOrderString = SearchFormatter.formatOrderAsSearchString(null);
+
+        StringBuilder cql = new StringBuilder("SELECT ").append(selectedColumnsString)
+                .append(" FROM datastax.vehicle WHERE solr_query = '{\"q\": \"")
+                .append(timeframeString).append(" AND ").append(areaString)
+                .append(emptyFilterString).append("\"").append(noOrderString).append("}' LIMIT 3");
+
+        System.out.println(cql);
+
+    }
+
+
+    @Test
+    public void testSolrStringHistoricalReadingsPerAreaAndTimeframeWithFilterAndOrder() {
+
+        String areaString = SearchFormatter.formatAreaAsSearchString(createArea());
+        String timeframeString = SearchFormatter.formatTimeframeAsSearchString(createTimeframe());
+        String selectedColumnsString = SearchFormatter.formatMeasurementsAsSearchString(createMeasurementsforAll());
+        String filterString = SearchFormatter.formatFilterAsSearchString("speed:[150 TO 200] AND p_Torque:[10 TO 45]");
+        String orderString = SearchFormatter.formatOrderAsSearchString(createOrder());
+
+        StringBuilder cql = new StringBuilder("SELECT ").append(selectedColumnsString)
+                .append(" FROM datastax.vehicle WHERE solr_query = '{\"q\": \"")
+                .append(timeframeString).append(" AND ").append(areaString)
+                .append(filterString).append("\"").append(orderString).append("}' LIMIT 100");
+
+        System.out.println(cql);
+
     }
 
     private Area createArea() {
@@ -61,16 +95,19 @@ public class TestSolrQuerySyntax {
 
     private MeasurementSubset createMeasurementsForSelected() {
         MeasurementSubset ms = new MeasurementSubset();
-        ms.setAllMeasurements(false);
         ms.includeMeasurements("meas1", "meas2", "meas3", "meas4");
         return ms;
     }
 
     private MeasurementSubset createMeasurementsforAll() {
-        MeasurementSubset ms = new MeasurementSubset();
-        ms.setAllMeasurements(true);
-        return ms;
+        return new MeasurementSubset();
     }
 
+    private Timeframe createTimeframe() {
+        return new Timeframe("2018/05/10 01:17:52", "2018/05/10 23:22:25");
+    }
 
+    private Order createOrder() {
+        return new Order(true);
+    }
 }

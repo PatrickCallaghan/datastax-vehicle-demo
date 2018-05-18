@@ -13,7 +13,7 @@ public class WSInputValidator {
     //2018/04/25 12:32:45
     private static DateTimeFormatter dtf = DateTimeFormat.forPattern("yyyy/MM/dd HH:mm:ss");
 
-    public static ValidationOutcome validateGlobalRequestInputWrapper(GlobalRequestInputWrapper iw) {
+    public static ValidationOutcome validateGlobalRequestInputWrapper(GlobalRequestInputWrapper iw, boolean requiresTimeframe) {
 
         Area area = iw.getArea();
         Timeframe timeframe = iw.getTimeframe();
@@ -27,13 +27,17 @@ public class WSInputValidator {
             valOut.addMessage(WSInputValidator.validateArea(area));
         }
 
+        if (requiresTimeframe && iw.getTimeframe() == null) {
+            valOut.addMessage("Timeframe is mandatory for this call but was not specified");
+        }
+
         if (timeframe != null) {
             valOut.addMessage(WSInputValidator.validateTimeframe(timeframe));
         }
 
-        if (ms != null) {
-            valOut.addMessage(WSInputValidator.validateMeasurementSubset(ms));
-        }
+//        if (ms != null) {
+//            valOut.addMessage(WSInputValidator.validateMeasurementSubset(ms));
+//        }
 
         return valOut;
     }
@@ -61,9 +65,9 @@ public class WSInputValidator {
             valOut.addMessage(WSInputValidator.validateTimeframe(timeframe));
         }
 
-        if (ms != null) {
-            valOut.addMessage(WSInputValidator.validateMeasurementSubset(ms));
-        }
+//        if (ms != null) {
+//            valOut.addMessage(WSInputValidator.validateMeasurementSubset(ms));
+//        }
 
         return valOut;
     }
@@ -105,8 +109,8 @@ public class WSInputValidator {
             endDate = timeframe.getEndDate() != null ? endDate = dtf.parseDateTime(timeframe.getEndDate()) : null;
         } catch (IllegalArgumentException iae) {
             return "At least one date had an invalid format. Expected format: " + expectedDateFormat +
-                        ", actual start date received: " + timeframe.getStartDate() +
-                        ", actual end date received: " + timeframe.getEndDate();
+                    ", actual start date received: " + timeframe.getStartDate() +
+                    ", actual end date received: " + timeframe.getEndDate();
         }
 
         if ((startDate != null && endDate != null) && (startDate.isAfter(endDate))) {
@@ -116,16 +120,16 @@ public class WSInputValidator {
         return null;
     }
 
-    private static String validateMeasurementSubset(MeasurementSubset ms) {
-        if (ms.isAllMeasurements()) {
-            if (ms.getIncludeOnly() != null && ms.getIncludeOnly().size() > 0) {
-                return "includeOnly should not be specified if all measurements have been requested";
-            }
-        } else {
-            if (ms.getIncludeOnly() == null || ms.getIncludeOnly().size() == 0) {
-                return "Specify at least one measurement to include";
-            }
-        }
-        return null;
-    }
+//    private static String validateMeasurementSubset(MeasurementSubset ms) {
+//        if (ms.isAllMeasurements()) {
+//            if (ms.getIncludeOnly() != null && ms.getIncludeOnly().size() > 0) {
+//                return "includeOnly should not be specified if all measurements have been requested";
+//            }
+//        } else {
+//            if (ms.getIncludeOnly() == null || ms.getIncludeOnly().size() == 0) {
+//                return "Specify at least one measurement to include";
+//            }
+//        }
+//        return null;
+//    }
 }

@@ -1,4 +1,4 @@
-import com.datastax.demo.utils.SolrFormatter;
+import com.datastax.demo.utils.SearchFormatter;
 import com.datastax.vehicle.webservice.resources.Area;
 import com.datastax.vehicle.webservice.resources.MeasurementSubset;
 import com.datastax.vehicle.webservice.resources.GeoPoint;
@@ -8,6 +8,8 @@ import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.junit.Test;
 
+import java.util.HashSet;
+
 
 public class TestFormatting {
 
@@ -16,7 +18,16 @@ public class TestFormatting {
         MeasurementSubset ms = new MeasurementSubset();
         ms.includeMeasurements("meas1", "meas2", "meas3");
 
-        System.out.println(SolrFormatter.formatMeasurementsAsSolrString(ms));
+        System.out.println(SearchFormatter.formatMeasurementsAsSearchString(ms));
+    }
+
+    @Test
+    public void testGetIncludedMeasurementsAsStringWithNullOrEmptyMeasurements() {
+        System.out.println("Null: " + SearchFormatter.formatMeasurementsAsSearchString(null));
+
+        MeasurementSubset ms = new MeasurementSubset();
+        ms.setIncludeOnly(new HashSet<>());
+        System.out.println("Empty: " + SearchFormatter.formatMeasurementsAsSearchString(ms));
     }
 
     /*
@@ -42,6 +53,6 @@ public class TestFormatting {
         p.addGeoPoints(pt1, pt2, pt3);
 
         Area a = new Area(p);
-        System.out.println(SolrFormatter.formatAreaAsSolrString(a));
+        System.out.println(SearchFormatter.formatAreaAsSearchString(a));
     }
 }

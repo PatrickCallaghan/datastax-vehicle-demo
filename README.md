@@ -54,7 +54,7 @@ or
 	CQL - select * from current_location where solr_query = '{"q": "tile1:gcrf"}' limit 1000;
 
 
-To find all vehicles within a certain distance of a latitude and longitude, http://localhost:8080/datastax-vehicle-app/rest/search/{lat}/{long}/{distance}
+To find all vehicles within a certain distance of a lat and lng, http://localhost:8080/datastax-vehicle-app/rest/search/{lat}/{long}/{distance}
 
 	http://localhost:8080/datastax-vehicle-app/rest/search/52.53956077140064/-0.20225833920426117/5
 	

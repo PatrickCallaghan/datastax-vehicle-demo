@@ -2,30 +2,30 @@ package com.datastax.vehicle.webservice.resources;
 
 public class GeoPoint {
 
-    private double latitude;
-    private double longitude;
+    private double lat;
+    private double lng;
 
     public GeoPoint() {}
 
-    public GeoPoint(double latitude, double longitude) {
-        this.latitude = latitude;
-        this.longitude = longitude;
+    public GeoPoint(double lat, double lng) {
+        this.lat = lat;
+        this.lng = lng;
     }
 
-    public double getLatitude() {
-        return latitude;
+    public double getLat() {
+        return lat;
     }
 
-    public void setLatitude(double latitude) {
-        this.latitude = latitude;
+    public void setLat(double lat) {
+        this.lat = lat;
     }
 
-    public double getLongitude() {
-        return longitude;
+    public double getLng() {
+        return lng;
     }
 
-    public void setLongitude(double longitude) {
-        this.longitude = longitude;
+    public void setLng(double lng) {
+        this.lng = lng;
     }
 
 }

@@ -4,18 +4,9 @@ import java.util.*;
 
 public class MeasurementSubset {
 
-    private boolean allMeasurements;
     private Set<String> includeOnly = new HashSet<>();
 
     public MeasurementSubset() {
-    }
-
-    public boolean isAllMeasurements() {
-        return allMeasurements;
-    }
-
-    public void setAllMeasurements(boolean allMeasurements) {
-        this.allMeasurements = allMeasurements;
     }
 
     public Set<String> getIncludeOnly() {
@@ -24,6 +15,11 @@ public class MeasurementSubset {
 
     public void setIncludeOnly(Set<String> includeOnly) {
         this.includeOnly = includeOnly;
+    }
+
+
+    public boolean retrieveAllMeasurements() {
+        return includeOnly == null || includeOnly.isEmpty();
     }
 
     public void includeMeasurements(String... measurements) {

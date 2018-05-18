@@ -3,20 +3,24 @@ package com.datastax.vehicle.webservice.resources;
 import java.util.ArrayList;
 import java.util.List;
 
+/*
+    Probably obsolete but leaving it here for now
+ */
+
 public class VehicleData {
 
     String vehicleId;
-    List<Reading> readings = new ArrayList<>();
+    List<VehicleReading> readings = new ArrayList<>();
 
     public VehicleData() {
     }
 
-    public VehicleData(String vehicleId, List<Reading> readings) {
+    public VehicleData(String vehicleId, List<VehicleReading> readings) {
         this.vehicleId = vehicleId;
         this.readings = readings;
     }
 
-    public VehicleData(String vehicleId, Reading reading) {
+    public VehicleData(String vehicleId, VehicleReading reading) {
         this.vehicleId = vehicleId;
         addReading(reading);
     }
@@ -29,15 +33,15 @@ public class VehicleData {
         this.vehicleId = vehicleId;
     }
 
-    public List<Reading> getReadings() {
+    public List<VehicleReading> getReadings() {
         return readings;
     }
 
-    public void setReadings(List<Reading> readings) {
+    public void setReadings(List<VehicleReading> readings) {
         this.readings = readings;
     }
 
-    public void addReading(Reading reading) {
+    public void addReading(VehicleReading reading) {
         readings.add(reading);
     }
 }

@@ -5,16 +5,10 @@ import java.util.List;
 
 import com.datastax.vehicle.dao.VehicleReadingRow;
 import com.datastax.vehicle.dao.VehicleSearchDao;
-import com.datastax.vehicle.webservice.resources.Area;
-import com.datastax.vehicle.webservice.resources.MeasurementSubset;
-import com.datastax.vehicle.webservice.resources.Timeframe;
-import com.datastax.vehicle.webservice.resources.VehicleData;
-import org.joda.time.DateTime;
+import com.datastax.vehicle.webservice.resources.*;
 
 import com.datastax.demo.utils.PropertyHelper;
 import com.datastax.vehicle.dao.VehicleDao;
-import com.datastax.vehicle.model.Vehicle;
-import com.github.davidmoten.geo.LatLong;
 
 public class VehicleService {
 
@@ -68,15 +62,15 @@ public class VehicleService {
 	 * @param filter
 	 * @return
 	 */
-	public List<VehicleData> retrieveLatestReadingOfVehicles(Area area, Timeframe timeframe,
-															 MeasurementSubset measurements, String filter) {
-		List<VehicleData> result = new ArrayList<>();
+	public List<VehicleReading> retrieveLatestReadingOfVehicles(Area area, Timeframe timeframe,
+																MeasurementSubset measurements, String filter) {
+		List<VehicleReading> result = new ArrayList<>();
 
 		// if no timeframe was specified, the request is for current data
 		if (timeframe == null) {
 			List<VehicleReadingRow> readingRows= searchDao.getCurrentReadingsPerArea(area, measurements, filter);
 			for (VehicleReadingRow vrr : readingRows) {
-				result.add(ResourceAssembler.assembleVehicleDataWithSingleReading(vrr));
+				result.add(ResourceAssembler.assembleVehicleReading(vrr));
 			}
 		} else {
 			//todo - retrieve latest in timeframe. this will read from the historical table
@@ -86,6 +80,17 @@ public class VehicleService {
 		return result;
 	}
 
+	public List<VehicleReading> retrieveHistoricalReadingsOfVehicles(Area area, Timeframe timeframe,
+																	 MeasurementSubset measurements, String filter, Order order) {
 
+		List<VehicleReading> result = new ArrayList<>();
+		List<VehicleReadingRow> readingRows= searchDao.getHistoricalReadingsPerAreaAndTimeframe(area, timeframe, measurements, filter, order);
+		for (VehicleReadingRow vrr : readingRows) {
+			result.add(ResourceAssembler.assembleVehicleReading(vrr));
+		}
+
+		return result;
+
+	}
 
 }

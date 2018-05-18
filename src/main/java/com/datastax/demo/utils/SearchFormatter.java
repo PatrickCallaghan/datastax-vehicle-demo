@@ -7,38 +7,49 @@ import org.joda.time.format.DateTimeFormatter;
 
 import java.util.Iterator;
 
-public class SolrFormatter {
+public class SearchFormatter {
 
-    private static DateTimeFormatter solrDateFormatter = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:sss'Z'");
+    //"yyyy/MM/dd HH:mm:ss"
+    private static DateTimeFormatter inputDateFormatter = DateTimeFormat.forPattern("yyyy/MM/dd HH:mm:ss");
+    private static DateTimeFormatter searchDateFormatter = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:sss'Z'");
 
 
-    public static String formatAreaAsSolrString(Area area) {
-        StringBuilder sb = new StringBuilder();
+    public static String formatAreaAsSearchString(Area area) {
+        StringBuilder sb = new StringBuilder(" lat_long:\\\"IsWithin(");
 
         if (area.isPolygon()) {
             sb.append("POLYGON((");
             Iterator<GeoPoint> iter = area.getPolygon().getGeoPoints().iterator();
             while (iter.hasNext()) {
                 GeoPoint p = iter.next();
-                sb.append(getPointAsSolrString(p));
+                sb.append(formatPointAsSearchString(p));
                 sb.append(iter.hasNext() ? ", " : ")) ");
             }
         } else {
             Circle circle = area.getCircle();
             sb.append("BUFFER(POINT(")
-                    .append(getPointAsSolrString(circle.getCentre()))
+                    .append(formatPointAsSearchString(circle.getCentre()))
                     .append("), ")
                     .append(circle.getRadius()).append(") ");
         }
+        sb.append( ")\\\" " );
 
         return sb.toString();
     }
 
-    public static String formatDateAsSolrString(DateTime dt) {
-        return dt != null ? solrDateFormatter.print(dt) : " * ";
+    //select * from datastax.vehicle where solr_query = '{"q": "speed:[150 TO 200]", "fq": "date:[2018-03-30T12:32:00.000Z TO 2018-03-30T14:45:00.000Z] AND lat_long:\"IsWithin(BUFFER(POINT(47.310179325765915 11.25321866241), .3))\""}' ;
+
+    public static String formatTimeframeAsSearchString(Timeframe timeframe) {
+        StringBuilder sb = new StringBuilder(" date:[");
+        sb.append(formatDateAsSearchString(timeframe.getStartDate()))
+                                                    .append(" TO ")
+                                                    .append(formatDateAsSearchString(timeframe.getEndDate()))
+                                                    .append("] ");
+        return sb.toString();
     }
 
-    public static String formatMeasurementsAsSolrString(MeasurementSubset ms) {
+
+    public static String formatMeasurementsAsSearchString(MeasurementSubset ms) {
         if (ms == null || ms.getIncludeOnly() == null || ms.getIncludeOnly().size() == 0) {
             return " * ";
         }
@@ -54,7 +65,23 @@ public class SolrFormatter {
         return sb.toString();
     }
 
-    public static String formatFilterAsSolrString(String filter) {
+    public static String formatOrderAsSearchString(Order order) {
+        StringBuilder sb = new StringBuilder(", \"sort\":\"vehicle asc");
+
+        if (order != null) {
+            if (order.isAscending()) {
+                sb.append(", date asc");
+            } else {
+                sb.append(", date desc");
+            }
+        }
+
+        sb.append("\" ");
+
+        return sb.toString();
+    }
+
+    public static String formatFilterAsSearchString(String filter) {
         if (filter == null || filter.isEmpty()) {
             return "";
         }
@@ -66,9 +93,13 @@ public class SolrFormatter {
     }
 
 
-    private static String getPointAsSolrString(GeoPoint p) {
+    private static String formatPointAsSearchString(GeoPoint p) {
         return p.getLat() + " " + p.getLng();
     }
 
 
+    private static String formatDateAsSearchString(String dateString) {
+        DateTime dt = new DateTime(inputDateFormatter.parseDateTime(dateString));
+        return dt != null ? searchDateFormatter.print(dt) : " * ";
+    }
 }
