@@ -1,11 +1,12 @@
 create keyspace if not exists datastax WITH replication = {'class': 'SimpleStrategy', 'replication_factor': '1' };
 
 use datastax;  
- 
-create table if not exists current_location(
+
+create table if not exists current_location (
 	vehicle text PRIMARY KEY,
 	tile1 text,
-	tile2 text,	
+	tile2 text,
+	geohash frozen<list<text>>,
 	lat_long 'PointType',
 	date timestamp,
 	speed double,
@@ -24,15 +25,17 @@ ALTER SEARCH INDEX SCHEMA ON current_location SET fields.field[@name='vehicle'] 
 ALTER SEARCH INDEX SCHEMA ON current_location ADD fields.field[@name='lat_long', @type='rpt', @indexed='true', @stored='true', @multiValued='false'];
 ALTER SEARCH INDEX SCHEMA ON current_location ADD fields.field[@name='tile1', @type='text', @indexed='true', @stored='true', @multiValued='false', @docValues='true'];
 ALTER SEARCH INDEX SCHEMA ON current_location ADD fields.field[@name='tile2', @type='text', @indexed='true', @stored='true', @multiValued='false', @docValues='true'];
+ALTER SEARCH INDEX SCHEMA ON current_location ADD fields.field[@name='geohash', @type='StrField', @indexed='true', @stored='true', @multiValued='true', @docValues='true'];
 RELOAD SEARCH INDEX ON current_location;
 
 
-create table if not exists vehicle(
+create table if not exists vehicle (
 	vehicle text,
 	day text,
 	date timestamp, 
 	lat_long 'PointType',
 	tile text,
+	geohash frozen<list<text>>,
 	speed double,
 	temperature double,
     p_ map<text,double>,
@@ -46,7 +49,8 @@ ALTER SEARCH INDEX SCHEMA ON vehicle ADD types.fieldtype[@class='solr.SpatialRec
 
 ALTER SEARCH INDEX SCHEMA ON vehicle SET fields.field[@name='vehicle'] @docValues='true';
 ALTER SEARCH INDEX SCHEMA ON vehicle ADD fields.field[@name='lat_long', @type='rpt', @indexed='true', @stored='true', @multiValued='false'];
-ALTER SEARCH INDEX SCHEMA ON current_location ADD fields.field[@name='tile', @type='text', @indexed='true', @stored='true', @multiValued='false', @docValues='true'];
+ALTER SEARCH INDEX SCHEMA ON vehicle ADD fields.field[@name='tile', @type='text', @indexed='true', @stored='true', @multiValued='false', @docValues='true'];
+ALTER SEARCH INDEX SCHEMA ON vehicle ADD fields.field[@name='geohash', @type='StrField', @indexed='true', @stored='true', @multiValued='true', @docValues='true'];
 RELOAD SEARCH INDEX ON vehicle;
 
 

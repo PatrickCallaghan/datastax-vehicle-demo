@@ -39,7 +39,7 @@ public class SolrFormatter {
     }
 
     public static String formatMeasurementsAsSolrString(MeasurementSubset ms) {
-        if (ms.isAllMeasurements()) {
+        if (ms == null || ms.getIncludeOnly() == null || ms.getIncludeOnly().size() == 0) {
             return " * ";
         }
 
@@ -55,6 +55,10 @@ public class SolrFormatter {
     }
 
     public static String formatFilterAsSolrString(String filter) {
+        if (filter == null || filter.isEmpty()) {
+            return "";
+        }
+
         StringBuilder sb = new StringBuilder();
 
         sb.append(" AND ").append(filter).append(" ");
@@ -63,7 +67,7 @@ public class SolrFormatter {
 
 
     private static String getPointAsSolrString(GeoPoint p) {
-        return p.getLatitude() + " " + p.getLongitude();
+        return p.getLat() + " " + p.getLng();
     }
 
 
