@@ -90,7 +90,22 @@ public class VehicleService {
 		}
 
 		return result;
+	}
 
+	public VehicleReading retrieveLatestReadingOfSingleVehicle(String vehicleId, Area area, Timeframe timeframe,
+															   MeasurementSubset measurements, String filter) {
+		VehicleReadingRow readingRow = searchDao.getLatestVehicleReading(vehicleId, area, timeframe, measurements, filter);
+		return ResourceAssembler.assembleVehicleReading(readingRow);
+	}
+
+	public List<VehicleReading> retrieveHistoricalReadingsOfSingleVehicle(String vehicleId, Area area, Timeframe timeframe,
+														MeasurementSubset measurements, String filter, Order order) {
+		List<VehicleReadingRow> readingRows = searchDao.getHistoricalVehicleReadings(vehicleId, area, timeframe, measurements,filter, order);
+		List<VehicleReading> result = new ArrayList<>();
+		for (VehicleReadingRow vrr : readingRows) {
+			result.add(ResourceAssembler.assembleVehicleReading(vrr));
+		}
+		return result;
 	}
 
 }

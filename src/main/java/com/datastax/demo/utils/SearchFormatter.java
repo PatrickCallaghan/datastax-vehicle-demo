@@ -66,29 +66,21 @@ public class SearchFormatter {
     }
 
     public static String formatOrderAsSearchString(Order order) {
-        StringBuilder sb = new StringBuilder(", \"sort\":\"vehicle asc");
-
+        StringBuilder sb = new StringBuilder(", \"sort\":\"");
         if (order != null) {
             if (order.isAscending()) {
-                sb.append(", date asc");
+                sb.append("date asc");
             } else {
-                sb.append(", date desc");
+                sb.append("date desc");
             }
         }
-
         sb.append("\" ");
-
         return sb.toString();
     }
 
     public static String formatFilterAsSearchString(String filter) {
-        if (filter == null || filter.isEmpty()) {
-            return "";
-        }
-
         StringBuilder sb = new StringBuilder();
-
-        sb.append(" AND ").append(filter).append(" ");
+        sb.append(filter).append(" ");
         return sb.toString();
     }
 

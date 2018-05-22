@@ -5,6 +5,7 @@ public class Order {
     private boolean ascending;
 
     public Order() {
+        this(false);
     }
 
     public Order(boolean ascending) {

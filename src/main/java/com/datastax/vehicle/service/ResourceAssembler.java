@@ -15,6 +15,10 @@ public class ResourceAssembler {
 
     public static VehicleReading assembleVehicleReading(VehicleReadingRow readingRow) {
 
+        if (readingRow == null) {
+            return null;
+        }
+
         GeoPoint position = new GeoPoint(readingRow.getLat(), readingRow.getLng());
         String createdAt = dtf.print(readingRow.getCreatedAt());
 

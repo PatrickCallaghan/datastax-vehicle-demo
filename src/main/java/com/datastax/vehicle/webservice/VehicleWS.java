@@ -114,9 +114,8 @@ public class VehicleWS {
 	 *        For specific point in time, set start date the same as end date
 	 *   - MeasurementSubset: optional. If specified, it defines what measurements should be returned for each reading
 	 *
- 	 * @return a list of VehicleData objects, each with a single reading
-	 * The latest reading of each vehicle in the area and timeframe. It will always contain position and timestamp
-	 * and may optionally contain measurements (if requested) as key-value pairs
+ 	 * @return a list of VehicleReading objects, representing the latest for each vehicle in the area and timeframe.
+	 * It will always contain position and timestamp and may optionally contain measurements (if requested) as key-value pairs
 	 */
 	@POST
 	@Path("/area/vehicles/readings/latest")
@@ -129,6 +128,7 @@ public class VehicleWS {
 		}
 
 		System.out.println("Web Service: Retrieving current vehicles in area...");
+		//TODO implement latest on historical timeframe
 		List<VehicleReading> result = service.retrieveLatestReadingOfVehicles(
 									inputWrapper.getArea(), inputWrapper.getTimeframe(),
 									inputWrapper.getMeasurementSubset(), inputWrapper.getFilter());
@@ -148,9 +148,9 @@ public class VehicleWS {
 	 *   - Order: optional. Passed only if the readings should be time-ordered and specifies how.
 	 *   - Filter: optional. Just a Search snippet defining the custom filtering logic. It contains conditions on one or more properties
 	 *
-	 * @return a list of VehicleData objects
+	 * @return a list of VehicleReading objects
 	 * All readings matching the filter that were recorded for each vehicle in the area and timeframe,
-	 * grouped by vehicle and ordered by time ascending or descending or not ordered at all (according to the flag).
+	 * ordered by time ascending or descending or not ordered at all (according to the flag).
 	 * Each reading will always contain position and timestamp and may optionally contain measurements (if requested) as key-value pairs.
 	 *
 	 */
@@ -169,11 +169,9 @@ public class VehicleWS {
 									inputWrapper.getArea(), inputWrapper.getTimeframe(),
 									inputWrapper.getMeasurementSubset(),
 									inputWrapper.getFilter(), inputWrapper.getOrder());
-		System.out.println("Web Service: All readings of all vehicles in area successfully retrieved. Size " + result.size());
+		System.out.println("Web Service: Historical readings of all vehicles in area successfully retrieved. Size " + result.size());
 
 		return Response.status(201).entity(result).build();
-		//return null;
-
 	}
 
 
@@ -184,14 +182,14 @@ public class VehicleWS {
 	 *
 	 * Input is a VehicleRequestInputWrapper containing:
 	 *   - VehicleID: mandatory.
-	 *   - Area: mandatory. It can be a polygon or a circle.
+	 *   - Area: optional. It can be a polygon or a circle.
 	 *   - Timeframe: optional. If not specified, the request is considered for current data.
 	 *        For specific point in time, set start date the same as end date
 	 *   - MeasurementSubset: optional. If specified, it defines what measurements should be returned for the reading
 	 *
 	 * @return a VehicleData object with a single reading
-	 * The latest reading of the requested vehicle in the area and timeframe. It will always contain position and timestamp
-	 * and may optionally contain measurements (if requested) as key-value pairs
+	 * The latest reading of the requested vehicle. Area and timeframe are optional. It will always contain position and
+	 * timestamp and may optionally contain measurements (if requested) as key-value pairs
 	 */
 	@POST
 	@Path("/vehicle/readings/latest")
@@ -203,9 +201,13 @@ public class VehicleWS {
 			return Response.status(400).entity(valOut.getValidationMessagesAsSingleString()).build();
 		}
 
-		// Generate some stubbed data to get going for now - TODO this will change!
-		VehicleReading result = SampleWSDataGenerator.generateSingleVehicleReading();
-
+		// Generate some stubbed data to get going for now
+		//VehicleReading result = SampleWSDataGenerator.generateSingleVehicleReading();
+		System.out.println("Web Service: Retrieving latest reading of vehicle " + inputWrapper.getVehicleId());
+		VehicleReading result = service.retrieveLatestReadingOfSingleVehicle(inputWrapper.getVehicleId(),
+														inputWrapper.getArea(), inputWrapper.getTimeframe(),
+														inputWrapper.getMeasurementSubset(), inputWrapper.getFilter() );
+		System.out.println("Web Service: Retrieved latest reading of vehicle " + inputWrapper.getVehicleId());
 		return Response.status(201).entity(result).build();
 	}
 
@@ -229,7 +231,7 @@ public class VehicleWS {
 	 */
 	@POST
 	@Path("/vehicle/readings/history")
-	public Response retrieveAllReadingsOfVehicle(VehicleRequestInputWrapper inputWrapper) {
+	public Response retrieveHistoricalReadingsOfVehicle(VehicleRequestInputWrapper inputWrapper) {
 
 		ValidationOutcome valOut = WSInputValidator.validateVehicleRequestInputWrapper(inputWrapper);
 
@@ -237,9 +239,14 @@ public class VehicleWS {
 			return Response.status(400).entity(valOut.getValidationMessagesAsSingleString()).build();
 		}
 
-
-		// Generate some stubbed data to get going for now - TODO this will change!
-		List<VehicleReading> result = SampleWSDataGenerator.generateListOfOneVehiclesWithTwoReadings();
+		// Generate some stubbed data to get going for now
+		//List<VehicleReading> result = SampleWSDataGenerator.generateListOfOneVehiclesWithTwoReadings();
+		System.out.println("Web Service: Retrieving historical readings of vehicle " + inputWrapper.getVehicleId());
+		List<VehicleReading> result = service.retrieveHistoricalReadingsOfSingleVehicle(inputWrapper.getVehicleId(),
+																	inputWrapper.getArea(), inputWrapper.getTimeframe(),
+																	inputWrapper.getMeasurementSubset(),
+																	inputWrapper.getFilter(), inputWrapper.getOrder() );
+		System.out.println("Web Service: Retrieved historical readings of vehicle " + inputWrapper.getVehicleId());
 
 		return Response.status(201).entity(result).build();
 	}

@@ -147,30 +147,23 @@ public class TestToAndFromJSON {
 
         VehicleRequestInputWrapper iw = new VehicleRequestInputWrapper();
 
-        iw.setVehicleId("vehicle12345");
+        iw.setVehicleId("10");
 
-        GeoPoint pt1 = new GeoPoint(42.78, 23.16);
-        GeoPoint pt2 = new GeoPoint(11.29, 26.89);
-        GeoPoint pt3 = new GeoPoint(31.44, 27.55);
-        Polygon p = new Polygon();
-        p.addGeoPoints(pt1, pt2, pt3);
-        Area a = new Area();
-        a.setPolygon(p);
-        iw.setArea(a);
+        iw.setArea(createArea());
 
-        Timeframe t = new Timeframe("2018/04/23 11:17:52", "2018/04/25 09:22:25");
+        Timeframe t = new Timeframe("2018/05/10 01:10:55", "2018/05/10 23:14:12");
         iw.setTimeframe(t);
 
         MeasurementSubset ms = new MeasurementSubset();
-        ms.includeMeasurements("meas1", "meas2", "meas3", "meas4");
+        ms.includeMeasurements("speed", "temperature");
         iw.setMeasurementSubset(ms);
 
         Order o = new Order();
         o.setAscending(false);
         iw.setOrder(o);
 
-        String f = "some valid search filter";
-        iw.setFilter(f);
+//        String f = "";
+//        iw.setFilter(f);
 
         ObjectMapper mapper = new ObjectMapper();
 
