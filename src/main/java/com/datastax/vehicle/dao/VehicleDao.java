@@ -124,7 +124,7 @@ public class VehicleDao {
 
 		for (Row row : all) {
 			Date date = row.getTimestamp("date");
-			String vehicleId = row.getString("vehicle");
+			String vehicleId = row.getString("vehicle_id");
 			Point lat_long = (Point) row.getObject("lat_long");
 			Double temperature = row.getDouble("temperature");
 			Double speed = row.getDouble("speed");
@@ -150,7 +150,7 @@ public class VehicleDao {
 //
 //		for (Row row : all) {
 //			Date date = row.getTimestamp("date");
-//			String vehicleId = row.getString("vehicle");
+//			String vehicleId = row.getString("vehicle_id");
 //			Point lat_long = (Point) row.getObject("lat_long");
 //			String tile1 = row.getString("tile");
 //			String tile2 = row.getString("tile2");
@@ -171,7 +171,7 @@ public class VehicleDao {
 		
 		String cql = "SELECT * FROM datastax.vehicle_historical_readings where solr_query=" + "'{\"q\":\"*:*\"," + "\"fq\":\"date:["
 				+ solrDateFormatter.format(from.toDate()) + " TO " + solrDateFormatter.format(to.toDate()) + "] "
-				+ "AND lat_long:\\\"isWithin(POLYGON((48.736989 10.271339, 48.067576 11.609030, 48.774243 12.913120, 49.595759 11.123788, 48.736989 10.271339)))\\\"\",\"facet\":{\"field\":\"vehicleId\", \"limit\":\"5000000\"}}'";
+				+ "AND lat_long:\\\"isWithin(POLYGON((48.736989 10.271339, 48.067576 11.609030, 48.774243 12.913120, 49.595759 11.123788, 48.736989 10.271339)))\\\"\",\"facet\":{\"field\":\"vehicle_id\", \"limit\":\"5000000\"}}'";
 
 		logger.info(cql);
 
@@ -185,7 +185,7 @@ public class VehicleDao {
 		try {
 			Map<String, Object> map = mapper.readValue(result, new TypeReference<Map<String, Object>>() {});
 
-			Map<String, Integer> facets = (Map<String, Integer>) map.get("vehicleId");
+			Map<String, Integer> facets = (Map<String, Integer>) map.get("vehicle_id");
 
 			for (Map.Entry<String, Integer> entry : facets.entrySet()) {
 
@@ -230,7 +230,7 @@ public class VehicleDao {
 			for (Row row : all) {
 
 				Date date = row.getTimestamp("date");
-				String vehicleId = row.getString("vehicleId");
+				String vehicleId = row.getString("vehicle_id");
 				Point lat_long = (Point) row.getObject("lat_long");
 				
 				Double temperature = row.getDouble("temperature");
