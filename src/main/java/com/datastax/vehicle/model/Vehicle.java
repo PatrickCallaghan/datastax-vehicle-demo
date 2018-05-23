@@ -7,29 +7,25 @@ import java.util.Map;
 import com.github.davidmoten.geo.LatLong;
 
 public class Vehicle {
-	private String vehicle;
+	private String vehicleId;
 	private Date date;
 	private LatLong latLong;
-	private String tile;
-	private String tile2;
 	private double temperature;
 	private double speed;
 	private Map<String, Double> p_ = new HashMap<String, Double>();
 
-	public Vehicle(String vehicle, Date date, LatLong latLong, String tile, String tile2, double temperature,
+	public Vehicle(String vehicleId, Date date, LatLong latLong, double temperature,
 			double speed) {
 		super();
-		this.vehicle = vehicle;
+		this.vehicleId = vehicleId;
 		this.date = date;
 		this.latLong = latLong;
-		this.tile = tile;
-		this.tile2 = tile2;
 		this.setTemperature(temperature);
 		this.setSpeed(speed);
 	}
 
-	public String getVehicle() {
-		return vehicle;
+	public String getVehicleId() {
+		return vehicleId;
 	}
 
 	public Date getDate() {
@@ -38,14 +34,6 @@ public class Vehicle {
 
 	public LatLong getLatLong() {
 		return latLong;
-	}
-
-	public String getTile() {
-		return tile;
-	}
-	
-	public String getTile2() {
-		return tile2;
 	}
 
 	public double getTemperature() {
@@ -74,7 +62,7 @@ public class Vehicle {
 
 	@Override
 	public String toString() {
-		return "Vehicle [vehicle=" + vehicle + ", date=" + date + ", latLong=" + latLong + ", tile=" + tile + ", tile2="
-				+ tile2 + ", temperature=" + temperature + ", speed=" + speed + ", properties=" + p_ + "]";
+		return "Vehicle [vehicleId=" + vehicleId + ", date=" + date + ", latLong=" + latLong +
+				", temperature=" + temperature + ", speed=" + speed + ", properties=" + p_ + "]";
 	}
 }

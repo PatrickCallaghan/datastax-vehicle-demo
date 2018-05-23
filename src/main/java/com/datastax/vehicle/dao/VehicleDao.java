@@ -35,20 +35,20 @@ public class VehicleDao {
 
 	private DseSession session;
 	private static String keyspaceName = "datastax";
-	private static String vehicleTable = keyspaceName + ".vehicle";
-	private static String currentLocationTable = keyspaceName + ".current_location";
+	private static String vehicleHistoricalReadingsTable = keyspaceName + ".vehicle_historical_readings";
+	private static String vehicleCurrentReadingTable = keyspaceName + ".vehicle_current_reading";
 	private static String vehicleStatusTable = keyspaceName + ".vehicle_status";
 
-	private static final String INSERT_INTO_VEHICLE = "Insert into " + vehicleTable
-			+ " (vehicle, day, date, lat_long, tile, speed, temperature, p_) values (?,?,?,?,?,?,?,?);";
-	private static final String INSERT_INTO_CURRENTLOCATION = "Insert into " + currentLocationTable
-			+ "(vehicle, tile1, tile2, lat_long, date, speed, temperature, p_) values (?,?,?,?,?,?,?,?)";
+	private static final String INSERT_INTO_VEHICLE_HIST_READINGS = "Insert into " + vehicleHistoricalReadingsTable
+			+ " (vehicle_id, day, date, lat_long, speed, temperature, p_) values (?,?,?,?,?,?,?);";
+	private static final String INSERT_INTO_VEHICLE_CURR_READING = "Insert into " + vehicleCurrentReadingTable
+			+ "(vehicle_id, lat_long, date, speed, temperature, p_) values (?,?,?,?,?,?)";
 	private static final String INSERT_INTO_VEHICLESTATUS = "Insert into " + vehicleStatusTable
-			+ "(vehicle, day, state_change_time, vehicle_state) values (?,?,?,?)";
+			+ "(vehicle_id, day, state_change_time, vehicle_state) values (?,?,?,?)";
 
-	private static final String QUERY_BY_VEHICLE = "select * from " + vehicleTable + " where vehicle = ? and day = ?";
-	private static final String QUERY_BY_VEHICLE_DATE = "select * from " + vehicleTable
-			+ " where vehicle = ? and day = ? and date < ? limit 1";
+	private static final String QUERY_BY_VEHICLE = "select * from " + vehicleHistoricalReadingsTable + " where vehicle_id = ? and day = ?";
+	private static final String QUERY_BY_VEHICLE_DATE = "select * from " + vehicleHistoricalReadingsTable
+			+ " where vehicle_id = ? and day = ? and date < ? limit 1";
 
 	private PreparedStatement insertVehicle;
 	private PreparedStatement insertCurrentLocation;
@@ -65,8 +65,8 @@ public class VehicleDao {
 
 		this.session = cluster.connect();
 
-		this.insertVehicle = session.prepare(INSERT_INTO_VEHICLE);
-		this.insertCurrentLocation = session.prepare(INSERT_INTO_CURRENTLOCATION);
+		this.insertVehicle = session.prepare(INSERT_INTO_VEHICLE_HIST_READINGS);
+		this.insertCurrentLocation = session.prepare(INSERT_INTO_VEHICLE_CURR_READING);
 		this.insertVehicleState = session.prepare(INSERT_INTO_VEHICLESTATUS);
 
 		this.queryVehicle = session.prepare(QUERY_BY_VEHICLE);
@@ -75,11 +75,11 @@ public class VehicleDao {
 
 	public void insertVehicleData(Vehicle vehicle) {
 
-		session.execute(insertVehicle.bind(vehicle.getVehicle(), dateFormatter.format(vehicle.getDate()),
+		session.execute(insertVehicle.bind(vehicle.getVehicleId(), dateFormatter.format(vehicle.getDate()),
 				vehicle.getDate(), new Point(vehicle.getLatLong().getLat(), vehicle.getLatLong().getLon()),
-				vehicle.getTile2(), vehicle.getSpeed(), vehicle.getTemperature(), vehicle.getProperties()));
+				vehicle.getSpeed(), vehicle.getTemperature(), vehicle.getProperties()));
 
-		session.execute(insertCurrentLocation.bind(vehicle.getVehicle(), vehicle.getTile(), vehicle.getTile2(),
+		session.execute(insertCurrentLocation.bind(vehicle.getVehicleId(),
 				new Point(vehicle.getLatLong().getLat(), vehicle.getLatLong().getLon()), vehicle.getDate(),
 				vehicle.getSpeed(), vehicle.getTemperature(), vehicle.getProperties()));
 	}
@@ -98,14 +98,14 @@ public class VehicleDao {
 		for (Row row : all) {
 			Date date = row.getTimestamp("date");
 			Point lat_long = (Point) row.getObject("lat_long");
-			String tile = row.getString("tile");
 			Double temperature = row.getDouble("temperature");
 			Double speed = row.getDouble("speed");
 
 			Double lat = lat_long.X();
 			Double lng = lat_long.Y();
 
-			Vehicle vehicle = new Vehicle(vehicleId, date, new LatLong(lat, lng), tile, "", temperature, speed);
+			//	public Vehicle(String vehicle, Date date, LatLong latLong, double temperature, double speed) {
+			Vehicle vehicle = new Vehicle(vehicleId, date, new LatLong(lat, lng), temperature, speed);
 			vehicleMovements.add(vehicle);
 		}
 
@@ -114,7 +114,7 @@ public class VehicleDao {
 
 	public List<Vehicle> searchVehiclesByLonLatAndDistance(int distance, LatLong latLong) {
 
-		String cql = "select * from " + currentLocationTable
+		String cql = "select * from " + vehicleCurrentReadingTable
 				+ " where solr_query = '{\"q\": \"*:*\", \"fq\": \"{!geofilt sfield=lat_long pt=" + latLong.getLat()
 				+ "," + latLong.getLon() + " d=" + distance + "}\"}'  limit 1000";
 		ResultSet resultSet = session.execute(cql);
@@ -126,52 +126,52 @@ public class VehicleDao {
 			Date date = row.getTimestamp("date");
 			String vehicleId = row.getString("vehicle");
 			Point lat_long = (Point) row.getObject("lat_long");
-			String tile = row.getString("tile");
 			Double temperature = row.getDouble("temperature");
 			Double speed = row.getDouble("speed");
 
 			Double lat = lat_long.X();
 			Double lng = lat_long.Y();
 
-			Vehicle vehicle = new Vehicle(vehicleId, date, new LatLong(lat, lng), tile, "", temperature, speed);
+			Vehicle vehicle = new Vehicle(vehicleId, date, new LatLong(lat, lng), temperature, speed);
 			vehicleMovements.add(vehicle);
 		}
 
 		return vehicleMovements;
 	}
 
-	public List<Vehicle> getVehiclesByTile(String tile) {
-		String cql = "select * from " + currentLocationTable + " where solr_query = '{\"q\": \"tile1: " + tile
-				+ "\"}' limit 1000";
-		ResultSet resultSet = session.execute(cql);
-
-		List<Vehicle> vehicleMovements = new ArrayList<Vehicle>();
-		List<Row> all = resultSet.all();
-
-		for (Row row : all) {
-			Date date = row.getTimestamp("date");
-			String vehicleId = row.getString("vehicle");
-			Point lat_long = (Point) row.getObject("lat_long");
-			String tile1 = row.getString("tile");
-			String tile2 = row.getString("tile2");
-			Double temperature = row.getDouble("temperature");
-			Double speed = row.getDouble("speed");
-
-			Double lat = lat_long.X();
-			Double lng = lat_long.Y();
-
-			Vehicle vehicle = new Vehicle(vehicleId, date, new LatLong(lat, lng), tile1, tile2, temperature, speed);
-			vehicleMovements.add(vehicle);
-		}
-
-		return vehicleMovements;
-	}
+	//TODO change to use new geohash list!
+//	public List<Vehicle> getVehiclesByTile(String tile) {
+//		String cql = "select * from " + vehicleCurrentReadingTable + " where solr_query = '{\"q\": \"tile1: " + tile
+//				+ "\"}' limit 1000";
+//		ResultSet resultSet = session.execute(cql);
+//
+//		List<Vehicle> vehicleMovements = new ArrayList<Vehicle>();
+//		List<Row> all = resultSet.all();
+//
+//		for (Row row : all) {
+//			Date date = row.getTimestamp("date");
+//			String vehicleId = row.getString("vehicle");
+//			Point lat_long = (Point) row.getObject("lat_long");
+//			String tile1 = row.getString("tile");
+//			String tile2 = row.getString("tile2");
+//			Double temperature = row.getDouble("temperature");
+//			Double speed = row.getDouble("speed");
+//
+//			Double lat = lat_long.X();
+//			Double lng = lat_long.Y();
+//
+//			Vehicle vehicle = new Vehicle(vehicleId, date, new LatLong(lat, lng), tile1, tile2, temperature, speed);
+//			vehicleMovements.add(vehicle);
+//		}
+//
+//		return vehicleMovements;
+//	}
 
 	public List<Vehicle> getVehiclesByAreaTimeLastPosition(DateTime from, DateTime to) {
 		
-		String cql = "SELECT * FROM datastax.vehicle where solr_query=" + "'{\"q\":\"*:*\"," + "\"fq\":\"date:["
+		String cql = "SELECT * FROM datastax.vehicle_historical_readings where solr_query=" + "'{\"q\":\"*:*\"," + "\"fq\":\"date:["
 				+ solrDateFormatter.format(from.toDate()) + " TO " + solrDateFormatter.format(to.toDate()) + "] "
-				+ "AND lat_long:\\\"isWithin(POLYGON((48.736989 10.271339, 48.067576 11.609030, 48.774243 12.913120, 49.595759 11.123788, 48.736989 10.271339)))\\\"\",\"facet\":{\"field\":\"vehicle\", \"limit\":\"5000000\"}}'";
+				+ "AND lat_long:\\\"isWithin(POLYGON((48.736989 10.271339, 48.067576 11.609030, 48.774243 12.913120, 49.595759 11.123788, 48.736989 10.271339)))\\\"\",\"facet\":{\"field\":\"vehicleId\", \"limit\":\"5000000\"}}'";
 
 		logger.info(cql);
 
@@ -185,7 +185,7 @@ public class VehicleDao {
 		try {
 			Map<String, Object> map = mapper.readValue(result, new TypeReference<Map<String, Object>>() {});
 
-			Map<String, Integer> facets = (Map<String, Integer>) map.get("vehicle");
+			Map<String, Integer> facets = (Map<String, Integer>) map.get("vehicleId");
 
 			for (Map.Entry<String, Integer> entry : facets.entrySet()) {
 
@@ -230,9 +230,8 @@ public class VehicleDao {
 			for (Row row : all) {
 
 				Date date = row.getTimestamp("date");
-				String vehicleId = row.getString("vehicle");
+				String vehicleId = row.getString("vehicleId");
 				Point lat_long = (Point) row.getObject("lat_long");
-				String tile = row.getString("tile");
 				
 				Double temperature = row.getDouble("temperature");
 				Double speed = row.getDouble("speed");
@@ -241,7 +240,7 @@ public class VehicleDao {
 				Double lat = lat_long.X();
 				Double lng = lat_long.Y();
 
-				Vehicle vehicle = new Vehicle(vehicleId, date, new LatLong(lat, lng), tile, null, temperature, speed);
+				Vehicle vehicle = new Vehicle(vehicleId, date, new LatLong(lat, lng), temperature, speed);
 				vehicle.setProperties(map);
 				vehicleMovements.add(vehicle);
 			}

@@ -2,10 +2,8 @@ create keyspace if not exists datastax WITH replication = {'class': 'SimpleStrat
 
 use datastax;  
 
-create table if not exists current_location (
-	vehicle text PRIMARY KEY,
-	tile1 text,
-	tile2 text,
+create table if not exists vehicle_current_reading (
+	vehicle_id text PRIMARY KEY,
 	geohash frozen<list<text>>,
 	lat_long 'PointType',
 	date timestamp,
@@ -14,55 +12,50 @@ create table if not exists current_location (
 	p_ map<text,double>
 ) WITH compaction = { 'class' :  'LeveledCompactionStrategy'  };
 
-CREATE SEARCH INDEX ON current_location WITH COLUMNS date, speed, p_, temperature AND OPTIONS {reindex: false, lenient: true};
+CREATE SEARCH INDEX ON vehicle_current_reading WITH COLUMNS date, speed, p_, temperature AND OPTIONS {reindex: false, lenient: true};
 
-ALTER SEARCH INDEX SCHEMA ON current_location ADD types.fieldtype[@class='solr.TextField', @name='text'] WITH '{"analyzer":{"tokenizer":{"class":"solr.StandardTokenizerFactory"}}}';
-ALTER SEARCH INDEX SCHEMA ON current_location ADD types.fieldtype[@class='solr.SpatialRecursivePrefixTreeFieldType',
+ALTER SEARCH INDEX SCHEMA ON vehicle_current_reading ADD types.fieldtype[@class='solr.SpatialRecursivePrefixTreeFieldType',
       @name='rpt', @distanceUnits='kilometers', @geo='true',
       @spatialContextFactory='org.locationtech.spatial4j.context.jts.JtsSpatialContextFactory'];
 
-ALTER SEARCH INDEX SCHEMA ON current_location SET fields.field[@name='vehicle'] @docValues='true';
-ALTER SEARCH INDEX SCHEMA ON current_location ADD fields.field[@name='lat_long', @type='rpt', @indexed='true', @stored='true', @multiValued='false'];
-ALTER SEARCH INDEX SCHEMA ON current_location ADD fields.field[@name='tile1', @type='text', @indexed='true', @stored='true', @multiValued='false', @docValues='true'];
-ALTER SEARCH INDEX SCHEMA ON current_location ADD fields.field[@name='tile2', @type='text', @indexed='true', @stored='true', @multiValued='false', @docValues='true'];
-ALTER SEARCH INDEX SCHEMA ON current_location ADD fields.field[@name='geohash', @type='StrField', @indexed='true', @stored='true', @multiValued='true', @docValues='true'];
-RELOAD SEARCH INDEX ON current_location;
+ALTER SEARCH INDEX SCHEMA ON vehicle_current_reading SET fields.field[@name='vehicle_id'] @docValues='true';
+ALTER SEARCH INDEX SCHEMA ON vehicle_current_reading ADD fields.field[@name='lat_long', @type='rpt', @indexed='true', @stored='true', @multiValued='false'];
+ALTER SEARCH INDEX SCHEMA ON vehicle_current_reading ADD fields.field[@name='geohash', @type='StrField', @indexed='true', @stored='true', @multiValued='true', @docValues='true'];
+RELOAD SEARCH INDEX ON vehicle_current_reading;
 
 
-create table if not exists vehicle (
-	vehicle text,
+create table if not exists vehicle_historical_readings (
+	vehicle_id text,
 	day text,
 	date timestamp, 
 	lat_long 'PointType',
-	tile text,
 	geohash frozen<list<text>>,
 	speed double,
 	temperature double,
     p_ map<text,double>,
-	PRIMARY KEY ((vehicle,day), date)
+	PRIMARY KEY ((vehicle_id,day), date)
 ) with clustering order by (date desc);
 
-CREATE SEARCH INDEX ON vehicle WITH COLUMNS speed, p_, temperature AND OPTIONS {reindex: false, lenient: true};
-ALTER SEARCH INDEX SCHEMA ON vehicle ADD types.fieldtype[@class='solr.TextField', @name='text'] WITH '{"analyzer":{"tokenizer":{"class":"solr.StandardTokenizerFactory"}}}';
-ALTER SEARCH INDEX SCHEMA ON vehicle ADD types.fieldtype[@class='solr.SpatialRecursivePrefixTreeFieldType', @name='rpt', @distanceUnits='kilometers',
+CREATE SEARCH INDEX ON vehicle_historical_readings WITH COLUMNS speed, p_, temperature AND OPTIONS {reindex: false, lenient: true};
+
+ALTER SEARCH INDEX SCHEMA ON vehicle_historical_readings ADD types.fieldtype[@class='solr.SpatialRecursivePrefixTreeFieldType', @name='rpt', @distanceUnits='kilometers',
                                                             @geo='true', @spatialContextFactory='org.locationtech.spatial4j.context.jts.JtsSpatialContextFactory'];
 
-ALTER SEARCH INDEX SCHEMA ON vehicle SET fields.field[@name='vehicle'] @docValues='true';
-ALTER SEARCH INDEX SCHEMA ON vehicle ADD fields.field[@name='lat_long', @type='rpt', @indexed='true', @stored='true', @multiValued='false'];
-ALTER SEARCH INDEX SCHEMA ON vehicle ADD fields.field[@name='tile', @type='text', @indexed='true', @stored='true', @multiValued='false', @docValues='true'];
-ALTER SEARCH INDEX SCHEMA ON vehicle ADD fields.field[@name='geohash', @type='StrField', @indexed='true', @stored='true', @multiValued='true', @docValues='true'];
-RELOAD SEARCH INDEX ON vehicle;
+ALTER SEARCH INDEX SCHEMA ON vehicle_historical_readings SET fields.field[@name='vehicle_id'] @docValues='true';
+ALTER SEARCH INDEX SCHEMA ON vehicle_historical_readings ADD fields.field[@name='lat_long', @type='rpt', @indexed='true', @stored='true', @multiValued='false'];
+ALTER SEARCH INDEX SCHEMA ON vehicle_historical_readings ADD fields.field[@name='geohash', @type='StrField', @indexed='true', @stored='true', @multiValued='true', @docValues='true'];
+RELOAD SEARCH INDEX ON vehicle_historical_readings;
 
 
 create table if not exists vehicle_status (
-    vehicle text,
+    vehicle_id text,
     day text,
     state_change_time timestamp,
     vehicle_state text,
-    PRIMARY KEY ((vehicle, day), state_change_time)
+    PRIMARY KEY ((vehicle_id, day), state_change_time)
 ) with clustering order by (state_change_time desc);
 
-truncate current_location;
-truncate vehicle;
+truncate vehicle_current_reading;
+truncate vehicle_historical_readings;
 truncate vehicle_status;
 

@@ -48,15 +48,12 @@ public class VehicleUpdater {
 		vehicleSpeeds.put(vehicleId, speed);
 		vehicleTemperatures.put(vehicleId, temperature);
 		
-		String tile1 = GeoHash.encodeHash(location, 4);
-		String tile2 = GeoHash.encodeHash(location, 7);
-		
 		HashMap<String, Double> properties = new HashMap<String, Double>(3);
 		properties.put("p_Oilpressure", Math.random()*80 + 50);
 		properties.put("p_Humidity", Math.random()*80 + 20);
 		properties.put("p_Torque", Math.random()*180);
 		
-		Vehicle vehicle = new Vehicle(vehicleId, date.toDate(), location, tile1, tile2, temperature, speed);
+		Vehicle vehicle = new Vehicle(vehicleId, date.toDate(), location, temperature, speed);
 		vehicle.setProperties(properties);
 		
 		return vehicle;
