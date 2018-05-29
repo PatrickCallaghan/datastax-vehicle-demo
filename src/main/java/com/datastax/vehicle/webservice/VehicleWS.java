@@ -130,8 +130,8 @@ public class VehicleWS {
 		System.out.println("Web Service: Retrieving current vehicles in area...");
 		//TODO implement latest on historical timeframe
 		List<VehicleReading> result = service.retrieveLatestReadingOfVehicles(
-									inputWrapper.getArea(), inputWrapper.getTimeframe(),
-									inputWrapper.getMeasurementSubset(), inputWrapper.getFilter());
+									inputWrapper.getArea(), inputWrapper.getTimeframe(), inputWrapper.getFilter(),
+									inputWrapper.isMeasurementsRequired());
 		System.out.println("Web Service: Current vehicles in area successfully retrieved. Size " + result.size());
 
 		return Response.status(201).entity(result).build();
@@ -166,9 +166,9 @@ public class VehicleWS {
 
 		System.out.println("Web Service: Retrieving all readings of all vehicles in area...");
 		List<VehicleReading> result = service.retrieveHistoricalReadingsOfVehicles(
-									inputWrapper.getArea(), inputWrapper.getTimeframe(),
-									inputWrapper.getMeasurementSubset(),
-									inputWrapper.getFilter(), inputWrapper.getOrder());
+															inputWrapper.getArea(), inputWrapper.getTimeframe(),
+															inputWrapper.getFilter(), inputWrapper.getOrder(),
+															inputWrapper.isMeasurementsRequired());
 		System.out.println("Web Service: Historical readings of all vehicles in area successfully retrieved. Size " + result.size());
 
 		return Response.status(201).entity(result).build();
@@ -206,7 +206,7 @@ public class VehicleWS {
 		System.out.println("Web Service: Retrieving latest reading of vehicle " + inputWrapper.getVehicleId());
 		VehicleReading result = service.retrieveLatestReadingOfSingleVehicle(inputWrapper.getVehicleId(),
 														inputWrapper.getArea(), inputWrapper.getTimeframe(),
-														inputWrapper.getMeasurementSubset(), inputWrapper.getFilter() );
+														inputWrapper.getFilter(), inputWrapper.isMeasurementsRequired());
 		System.out.println("Web Service: Retrieved latest reading of vehicle " + inputWrapper.getVehicleId());
 		return Response.status(201).entity(result).build();
 	}
@@ -244,8 +244,8 @@ public class VehicleWS {
 		System.out.println("Web Service: Retrieving historical readings of vehicle " + inputWrapper.getVehicleId());
 		List<VehicleReading> result = service.retrieveHistoricalReadingsOfSingleVehicle(inputWrapper.getVehicleId(),
 																	inputWrapper.getArea(), inputWrapper.getTimeframe(),
-																	inputWrapper.getMeasurementSubset(),
-																	inputWrapper.getFilter(), inputWrapper.getOrder() );
+																	inputWrapper.getFilter(), inputWrapper.getOrder(),
+																	inputWrapper.isMeasurementsRequired());
 		System.out.println("Web Service: Retrieved historical readings of vehicle " + inputWrapper.getVehicleId());
 
 		return Response.status(201).entity(result).build();

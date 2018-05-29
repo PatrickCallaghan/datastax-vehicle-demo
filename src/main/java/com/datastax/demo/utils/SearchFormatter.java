@@ -1,6 +1,8 @@
 package com.datastax.demo.utils;
 
 import com.datastax.vehicle.webservice.resources.*;
+
+import org.apache.commons.codec.binary.StringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
@@ -48,21 +50,12 @@ public class SearchFormatter {
         return sb.toString();
     }
 
-
-    public static String formatMeasurementsAsSearchString(MeasurementSubset ms) {
-        if (ms == null || ms.getIncludeOnly() == null || ms.getIncludeOnly().size() == 0) {
+    public static String formatMeasurementsAsSearchString(boolean measurementsRequired) {
+        if (measurementsRequired) {
             return " * ";
+        } else {
+            return " vehicle_id, date, lat_long ";
         }
-
-        StringBuilder sb = new StringBuilder( "vehicle, date, lat_long, ");
-        Iterator<String> iter = ms.getIncludeOnly().iterator();
-        while (iter.hasNext()) {
-            sb.append(iter.next());
-            if (iter.hasNext()) {
-                sb.append(", ");
-            }
-        }
-        return sb.toString();
     }
 
     public static String formatOrderAsSearchString(Order order) {

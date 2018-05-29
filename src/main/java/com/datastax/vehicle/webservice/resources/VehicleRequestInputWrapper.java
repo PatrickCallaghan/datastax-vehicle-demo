@@ -5,9 +5,9 @@ public class VehicleRequestInputWrapper {
     private String vehicleId;
     private Area area;
     private Timeframe timeframe;
-    private MeasurementSubset measurementSubset;
     private Order order;
     private String filter;
+    private boolean measurementsRequired;
 
     public VehicleRequestInputWrapper() {
     }
@@ -36,14 +36,6 @@ public class VehicleRequestInputWrapper {
         this.timeframe = timeframe;
     }
 
-    public MeasurementSubset getMeasurementSubset() {
-        return measurementSubset;
-    }
-
-    public void setMeasurementSubset(MeasurementSubset measurementSubset) {
-        this.measurementSubset = measurementSubset;
-    }
-
     public Order getOrder() {
         return order;
     }
@@ -58,5 +50,13 @@ public class VehicleRequestInputWrapper {
 
     public void setFilter(String filter) {
         this.filter = filter;
+    }
+
+    public boolean isMeasurementsRequired() {
+        return measurementsRequired;
+    }
+
+    public void setMeasurementsRequired(boolean retrieveMeasurements) {
+        this.measurementsRequired = retrieveMeasurements;
     }
 }

@@ -53,9 +53,8 @@ public class VehicleUpdater {
 		properties.put("p_Humidity", Math.random()*80 + 20);
 		properties.put("p_Torque", Math.random()*180);
 		
-		Vehicle vehicle = new Vehicle(vehicleId, date.toDate(), location, temperature, speed);
-		vehicle.setProperties(properties);
-		
+		Vehicle vehicle = new Vehicle(vehicleId, date.toDate(), location, temperature, speed, properties);
+
 		return vehicle;
 	}
 	

@@ -17,7 +17,6 @@ public class WSInputValidator {
 
         Area area = iw.getArea();
         Timeframe timeframe = iw.getTimeframe();
-        MeasurementSubset ms = iw.getMeasurementSubset();
 
         ValidationOutcome valOut = new ValidationOutcome();
 
@@ -47,7 +46,6 @@ public class WSInputValidator {
         String vehicleId = iw.getVehicleId();
         Area area = iw.getArea();
         Timeframe timeframe = iw.getTimeframe();
-        MeasurementSubset ms = iw.getMeasurementSubset();
 
         ValidationOutcome valOut = new ValidationOutcome();
 

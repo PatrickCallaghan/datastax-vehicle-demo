@@ -57,10 +57,7 @@ public class TestToAndFromJSON {
         iw.setArea(createArea());
         iw.setTimeframe(t);
 
-        MeasurementSubset ms = new MeasurementSubset();
-        ms.includeMeasurements("speed", "temperature");
-
-        iw.setMeasurementSubset(ms);
+        iw.setMeasurementsRequired(true);
 
         ObjectMapper mapper = new ObjectMapper();
 
@@ -88,9 +85,7 @@ public class TestToAndFromJSON {
         Timeframe t = new Timeframe("2018/04/23 11:17:52", "2018/04/25 09:22:25");
         iw.setTimeframe(t);
 
-        MeasurementSubset ms = new MeasurementSubset();
-        ms.includeMeasurements("meas1", "meas2", "meas3", "meas4");
-        iw.setMeasurementSubset(ms);
+        iw.setMeasurementsRequired(true);
 
         Order o = new Order();
         o.setAscending(false);
@@ -120,8 +115,7 @@ public class TestToAndFromJSON {
 
         iw.setArea(createArea());
 
-        MeasurementSubset ms = new MeasurementSubset();
-        iw.setMeasurementSubset(ms);
+        iw.setMeasurementsRequired(true);
 
         String f = "speed:[20 TO 40]";
         iw.setFilter(f);
@@ -154,9 +148,7 @@ public class TestToAndFromJSON {
         Timeframe t = new Timeframe("2018/05/10 01:10:55", "2018/05/10 23:14:12");
         iw.setTimeframe(t);
 
-        MeasurementSubset ms = new MeasurementSubset();
-        ms.includeMeasurements("speed", "temperature");
-        iw.setMeasurementSubset(ms);
+        iw.setMeasurementsRequired(true);
 
         Order o = new Order();
         o.setAscending(false);

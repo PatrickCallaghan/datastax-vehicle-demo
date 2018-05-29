@@ -39,10 +39,10 @@ public class VehicleDao {
 	private static String vehicleCurrentReadingTable = keyspaceName + ".vehicle_current_reading";
 	private static String vehicleStatusTable = keyspaceName + ".vehicle_status";
 
-	private static final String INSERT_INTO_VEHICLE_HIST_READINGS = "Insert into " + vehicleHistoricalReadingsTable
-			+ " (vehicle_id, day, date, lat_long, speed, temperature, p_) values (?,?,?,?,?,?,?);";
 	private static final String INSERT_INTO_VEHICLE_CURR_READING = "Insert into " + vehicleCurrentReadingTable
-			+ "(vehicle_id, lat_long, date, speed, temperature, p_) values (?,?,?,?,?,?)";
+			+ "(vehicle_id, lat_long, date, speed, temperature, p_, geohash) values (?,?,?,?,?,?,?)";
+	private static final String INSERT_INTO_VEHICLE_HIST_READINGS = "Insert into " + vehicleHistoricalReadingsTable
+			+ " (vehicle_id, day, date, lat_long, speed, temperature, p_, geohash) values (?,?,?,?,?,?,?,?);";
 	private static final String INSERT_INTO_VEHICLESTATUS = "Insert into " + vehicleStatusTable
 			+ "(vehicle_id, day, state_change_time, vehicle_state) values (?,?,?,?)";
 
@@ -50,8 +50,8 @@ public class VehicleDao {
 	private static final String QUERY_BY_VEHICLE_DATE = "select * from " + vehicleHistoricalReadingsTable
 			+ " where vehicle_id = ? and day = ? and date < ? limit 1";
 
-	private PreparedStatement insertVehicle;
-	private PreparedStatement insertCurrentLocation;
+	private PreparedStatement insertVehicleHistReading;
+	private PreparedStatement insertVehicleCurrentReading;
 	private PreparedStatement insertVehicleState;
 	private PreparedStatement queryVehicle;
 	private PreparedStatement queryVehicleDate;
@@ -65,8 +65,8 @@ public class VehicleDao {
 
 		this.session = cluster.connect();
 
-		this.insertVehicle = session.prepare(INSERT_INTO_VEHICLE_HIST_READINGS);
-		this.insertCurrentLocation = session.prepare(INSERT_INTO_VEHICLE_CURR_READING);
+		this.insertVehicleHistReading = session.prepare(INSERT_INTO_VEHICLE_HIST_READINGS);
+		this.insertVehicleCurrentReading = session.prepare(INSERT_INTO_VEHICLE_CURR_READING);
 		this.insertVehicleState = session.prepare(INSERT_INTO_VEHICLESTATUS);
 
 		this.queryVehicle = session.prepare(QUERY_BY_VEHICLE);
@@ -75,13 +75,13 @@ public class VehicleDao {
 
 	public void insertVehicleData(Vehicle vehicle) {
 
-		session.execute(insertVehicle.bind(vehicle.getVehicleId(), dateFormatter.format(vehicle.getDate()),
+		session.execute(insertVehicleHistReading.bind(vehicle.getVehicleId(), dateFormatter.format(vehicle.getDate()),
 				vehicle.getDate(), new Point(vehicle.getLatLong().getLat(), vehicle.getLatLong().getLon()),
-				vehicle.getSpeed(), vehicle.getTemperature(), vehicle.getProperties()));
+				vehicle.getSpeed(), vehicle.getTemperature(), vehicle.getProperties(), vehicle.getGeoHashList()));
 
-		session.execute(insertCurrentLocation.bind(vehicle.getVehicleId(),
+		session.execute(insertVehicleCurrentReading.bind(vehicle.getVehicleId(),
 				new Point(vehicle.getLatLong().getLat(), vehicle.getLatLong().getLon()), vehicle.getDate(),
-				vehicle.getSpeed(), vehicle.getTemperature(), vehicle.getProperties()));
+				vehicle.getSpeed(), vehicle.getTemperature(), vehicle.getProperties(), vehicle.getGeoHashList()));
 	}
 
 	public void insertVehicleStatus(String vehicleId, DateTime statusDate, String status) {
@@ -96,16 +96,7 @@ public class VehicleDao {
 		List<Row> all = resultSet.all();
 
 		for (Row row : all) {
-			Date date = row.getTimestamp("date");
-			Point lat_long = (Point) row.getObject("lat_long");
-			Double temperature = row.getDouble("temperature");
-			Double speed = row.getDouble("speed");
-
-			Double lat = lat_long.X();
-			Double lng = lat_long.Y();
-
-			//	public Vehicle(String vehicle, Date date, LatLong latLong, double temperature, double speed) {
-			Vehicle vehicle = new Vehicle(vehicleId, date, new LatLong(lat, lng), temperature, speed);
+			Vehicle vehicle = createVehicleFromRow(row);
 			vehicleMovements.add(vehicle);
 		}
 
@@ -123,16 +114,7 @@ public class VehicleDao {
 		List<Row> all = resultSet.all();
 
 		for (Row row : all) {
-			Date date = row.getTimestamp("date");
-			String vehicleId = row.getString("vehicle_id");
-			Point lat_long = (Point) row.getObject("lat_long");
-			Double temperature = row.getDouble("temperature");
-			Double speed = row.getDouble("speed");
-
-			Double lat = lat_long.X();
-			Double lng = lat_long.Y();
-
-			Vehicle vehicle = new Vehicle(vehicleId, date, new LatLong(lat, lng), temperature, speed);
+			Vehicle vehicle = createVehicleFromRow(row);
 			vehicleMovements.add(vehicle);
 		}
 
@@ -229,23 +211,28 @@ public class VehicleDao {
 
 			for (Row row : all) {
 
-				Date date = row.getTimestamp("date");
-				String vehicleId = row.getString("vehicle_id");
-				Point lat_long = (Point) row.getObject("lat_long");
-				
-				Double temperature = row.getDouble("temperature");
-				Double speed = row.getDouble("speed");
-				Map<String, Double> map = row.getMap("p_", String.class, Double.class);
+				Vehicle vehicle = createVehicleFromRow(row);
 
-				Double lat = lat_long.X();
-				Double lng = lat_long.Y();
-
-				Vehicle vehicle = new Vehicle(vehicleId, date, new LatLong(lat, lng), temperature, speed);
-				vehicle.setProperties(map);
 				vehicleMovements.add(vehicle);
 			}
 		}
 
 		return vehicleMovements;
+	}
+
+	private Vehicle createVehicleFromRow(Row row) {
+		Date date = row.getTimestamp("date");
+		String vehicleId = row.getString("vehicle_id");
+		Point lat_long = (Point) row.getObject("lat_long");
+
+		Double temperature = row.getDouble("temperature");
+		Double speed = row.getDouble("speed");
+		// geohash list is not necessary here, as there is no need to return it
+		Map<String, Double> properties = row.getMap("p_", String.class, Double.class);
+
+		Double lat = lat_long.X();
+		Double lng = lat_long.Y();
+
+		return new Vehicle(vehicleId, date, new LatLong(lat, lng), temperature, speed, properties);
 	}
 }

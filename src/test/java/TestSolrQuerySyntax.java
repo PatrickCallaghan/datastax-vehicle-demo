@@ -8,7 +8,7 @@ public class TestSolrQuerySyntax {
     public void testSolrStringCurrentReadingsPerArea() throws Exception {
 
         String areaString = SearchFormatter.formatAreaAsSearchString(createArea());
-        String selectedColumns = SearchFormatter.formatMeasurementsAsSearchString(createMeasurementsforAll());
+        String selectedColumns = SearchFormatter.formatMeasurementsAsSearchString(true);
         String emptyFilterString = SearchFormatter.formatFilterAsSearchString("");
 
         StringBuilder cql = new StringBuilder("SELECT ").append(selectedColumns)
@@ -24,7 +24,7 @@ public class TestSolrQuerySyntax {
 
 
         String areaString = SearchFormatter.formatAreaAsSearchString(createArea());
-        String selectedColumns = SearchFormatter.formatMeasurementsAsSearchString(createMeasurementsforAll());
+        String selectedColumns = SearchFormatter.formatMeasurementsAsSearchString(true);
         String filterString = SearchFormatter.formatFilterAsSearchString("speed:[20 TO 40]");
 
 //        StringBuilder cql = new StringBuilder("SELECT ").append(selectedColumns)
@@ -45,7 +45,7 @@ public class TestSolrQuerySyntax {
 
         String areaString = SearchFormatter.formatAreaAsSearchString(createArea());
         String timeframeString = SearchFormatter.formatTimeframeAsSearchString(createTimeframe());
-        String selectedColumnsString = SearchFormatter.formatMeasurementsAsSearchString(createMeasurementsforAll());
+        String selectedColumnsString = SearchFormatter.formatMeasurementsAsSearchString(true);
         String emptyFilterString = SearchFormatter.formatFilterAsSearchString("");
         String noOrderString = SearchFormatter.formatOrderAsSearchString(null);
 
@@ -64,7 +64,7 @@ public class TestSolrQuerySyntax {
 
         String areaString = SearchFormatter.formatAreaAsSearchString(createArea());
         String timeframeString = SearchFormatter.formatTimeframeAsSearchString(createTimeframe());
-        String selectedColumnsString = SearchFormatter.formatMeasurementsAsSearchString(createMeasurementsforAll());
+        String selectedColumnsString = SearchFormatter.formatMeasurementsAsSearchString(true);
         String filterString = SearchFormatter.formatFilterAsSearchString("speed:[150 TO 200] AND p_Torque:[10 TO 45]");
         String orderString = SearchFormatter.formatOrderAsSearchString(createOrder());
 
@@ -91,16 +91,6 @@ public class TestSolrQuerySyntax {
         a.setPolygon(p);
 
         return a;
-    }
-
-    private MeasurementSubset createMeasurementsForSelected() {
-        MeasurementSubset ms = new MeasurementSubset();
-        ms.includeMeasurements("meas1", "meas2", "meas3", "meas4");
-        return ms;
-    }
-
-    private MeasurementSubset createMeasurementsforAll() {
-        return new MeasurementSubset();
     }
 
     private Timeframe createTimeframe() {

@@ -55,20 +55,14 @@ public class VehicleService {
 	 *
 	 * If a timeframe is specified, then the request will return the latest position for each vehicle that was
 	 * in that area in that timeframe.
-	 *
-	 * @param area
-	 * @param timeframe
-	 * @param measurements
-	 * @param filter
-	 * @return
 	 */
-	public List<VehicleReading> retrieveLatestReadingOfVehicles(Area area, Timeframe timeframe,
-																MeasurementSubset measurements, String filter) {
+	public List<VehicleReading> retrieveLatestReadingOfVehicles(Area area, Timeframe timeframe, String filter,
+																boolean measurementsRequired) {
 		List<VehicleReading> result = new ArrayList<>();
 
 		// if no timeframe was specified, the request is for current data
 		if (timeframe == null) {
-			List<VehicleReadingRow> readingRows= searchDao.getCurrentReadingsPerArea(area, measurements, filter);
+			List<VehicleReadingRow> readingRows= searchDao.getCurrentReadingsPerArea(area, filter, measurementsRequired);
 			for (VehicleReadingRow vrr : readingRows) {
 				result.add(ResourceAssembler.assembleVehicleReading(vrr));
 			}
@@ -80,11 +74,12 @@ public class VehicleService {
 		return result;
 	}
 
-	public List<VehicleReading> retrieveHistoricalReadingsOfVehicles(Area area, Timeframe timeframe,
-																	 MeasurementSubset measurements, String filter, Order order) {
+	public List<VehicleReading> retrieveHistoricalReadingsOfVehicles(Area area, Timeframe timeframe, String filter,
+																	 Order order, boolean measurementsRequired) {
 
 		List<VehicleReading> result = new ArrayList<>();
-		List<VehicleReadingRow> readingRows= searchDao.getHistoricalReadingsPerAreaAndTimeframe(area, timeframe, measurements, filter, order);
+		List<VehicleReadingRow> readingRows= searchDao.getHistoricalReadingsPerAreaAndTimeframe(area, timeframe, filter,
+																							order, measurementsRequired);
 		for (VehicleReadingRow vrr : readingRows) {
 			result.add(ResourceAssembler.assembleVehicleReading(vrr));
 		}
@@ -93,14 +88,16 @@ public class VehicleService {
 	}
 
 	public VehicleReading retrieveLatestReadingOfSingleVehicle(String vehicleId, Area area, Timeframe timeframe,
-															   MeasurementSubset measurements, String filter) {
-		VehicleReadingRow readingRow = searchDao.getLatestVehicleReading(vehicleId, area, timeframe, measurements, filter);
+															   String filter, boolean measurementsRequired) {
+		VehicleReadingRow readingRow = searchDao.getLatestVehicleReading(vehicleId, area, timeframe,
+																			filter, measurementsRequired);
 		return ResourceAssembler.assembleVehicleReading(readingRow);
 	}
 
 	public List<VehicleReading> retrieveHistoricalReadingsOfSingleVehicle(String vehicleId, Area area, Timeframe timeframe,
-														MeasurementSubset measurements, String filter, Order order) {
-		List<VehicleReadingRow> readingRows = searchDao.getHistoricalVehicleReadings(vehicleId, area, timeframe, measurements,filter, order);
+														String filter, Order order, boolean measurementsRequired) {
+		List<VehicleReadingRow> readingRows = searchDao.getHistoricalVehicleReadings(vehicleId, area, timeframe, filter,
+				order, measurementsRequired);
 		List<VehicleReading> result = new ArrayList<>();
 		for (VehicleReadingRow vrr : readingRows) {
 			result.add(ResourceAssembler.assembleVehicleReading(vrr));

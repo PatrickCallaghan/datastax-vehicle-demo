@@ -9,8 +9,7 @@ import com.datastax.driver.dse.geometry.Point;
 import com.datastax.vehicle.webservice.resources.*;
 import org.joda.time.DateTime;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class VehicleSearchDao {
 
@@ -23,13 +22,13 @@ public class VehicleSearchDao {
 
     }
 
-    public List<VehicleReadingRow> getCurrentReadingsPerArea(Area area, MeasurementSubset measurements, String filter) {
+    public List<VehicleReadingRow> getCurrentReadingsPerArea(Area area, String filter, boolean measurementsRequired) {
 
         String areaSearchString = SearchFormatter.formatAreaAsSearchString(area);
-        String selectedColumnsSearchString = SearchFormatter.formatMeasurementsAsSearchString(measurements) ;
+        String selectedColumnsSearchString = SearchFormatter.formatMeasurementsAsSearchString(measurementsRequired) ;
 
         StringBuilder cql = new StringBuilder("SELECT ").append(selectedColumnsSearchString)
-                .append(" FROM datastax.current_location WHERE solr_query = '{\"q\":\"").append(areaSearchString);
+                .append(" FROM datastax.vehicle_current_reading WHERE solr_query = '{\"q\":\"").append(areaSearchString);
 
         if (filter != null && !filter.isEmpty()) {
             cql.append(" AND ").append(SearchFormatter.formatFilterAsSearchString(filter));
@@ -43,25 +42,23 @@ public class VehicleSearchDao {
         List<Row> allRows = resultSet.all();
         List<VehicleReadingRow> readingRows = new ArrayList<>();
         for (Row row : allRows) {
-            readingRows.add(buildVehicleReadingRow(row));
+            readingRows.add(buildVehicleReadingRow(row, measurementsRequired));
         }
 
         return readingRows;
     }
 
-    //select * from datastax.vehicle where solr_query = '{"q": "speed:[150 TO 200]", "fq": "date:[2018-03-30T12:32:00.000Z TO 2018-03-30T14:45:00.000Z] AND lat_long:\"IsWithin(BUFFER(POINT(47.310179325765915 11.25321866241), .3))\""}' ;
-
     public List<VehicleReadingRow> getHistoricalReadingsPerAreaAndTimeframe(Area area, Timeframe timeframe,
-                                                                             MeasurementSubset measurements,
-                                                                             String filter, Order order) {
+                                                                             String filter, Order order,
+                                                                            boolean measurementsRequired) {
 
         String areaSearchString = SearchFormatter.formatAreaAsSearchString(area);
-        String selectedColumnsSearchString = SearchFormatter.formatMeasurementsAsSearchString(measurements) ;
+        String selectedColumnsSearchString = SearchFormatter.formatMeasurementsAsSearchString(measurementsRequired) ;
         String timeframeSearchString = SearchFormatter.formatTimeframeAsSearchString(timeframe);
 
         // Area and timeframe are mandatory here
         StringBuilder cql = new StringBuilder("SELECT ").append(selectedColumnsSearchString)
-                .append(" FROM datastax.vehicle WHERE solr_query = '{\"q\": \"")
+                .append(" FROM datastax.vehicle_historical_readings WHERE solr_query = '{\"q\": \"")
                 .append(areaSearchString).append(" AND ").append(timeframeSearchString);
 
         if (filter != null && !filter.isEmpty()) {
@@ -81,18 +78,19 @@ public class VehicleSearchDao {
         List<Row> allRows = resultSet.all();
         List<VehicleReadingRow> readingRows = new ArrayList<>();
         for (Row row : allRows) {
-            readingRows.add(buildVehicleReadingRow(row));
+            readingRows.add(buildVehicleReadingRow(row, measurementsRequired));
         }
 
         return readingRows;
     }
 
     public VehicleReadingRow getLatestVehicleReading(String vehicleId, Area area, Timeframe timeframe,
-                                                     MeasurementSubset measurements, String filter) {
+                                                        String filter, boolean measurementsRequired) {
 
+        String selectedColumnsSearchString = SearchFormatter.formatMeasurementsAsSearchString(measurementsRequired);
         StringBuilder cql = new StringBuilder("SELECT ")
-                            .append(SearchFormatter.formatMeasurementsAsSearchString(measurements))
-                            .append(" FROM datastax.vehicle WHERE solr_query = '{\"q\": \" vehicle:").append(vehicleId);
+                            .append(selectedColumnsSearchString)
+                            .append(" FROM datastax.vehicle_historical_readings WHERE solr_query = '{\"q\": \" vehicle_id:").append(vehicleId);
 
         if (area != null) {
             cql.append(" AND ").append(SearchFormatter.formatAreaAsSearchString(area));
@@ -114,15 +112,15 @@ public class VehicleSearchDao {
 
         ResultSet resultSet = session.execute(cql.toString());
         Row row = resultSet.one();
-        return buildVehicleReadingRow(row);
+        return buildVehicleReadingRow(row, measurementsRequired);
     }
 
     public List<VehicleReadingRow> getHistoricalVehicleReadings(String vehicleId, Area area, Timeframe timeframe,
-                                                     MeasurementSubset measurements, String filter, Order order) {
+                                                     String filter, Order order, boolean measurementsRequired) {
 
-        StringBuilder cql = new StringBuilder("SELECT ")
-                .append(SearchFormatter.formatMeasurementsAsSearchString(measurements))
-                .append(" FROM datastax.vehicle WHERE solr_query = '{\"q\": \" vehicle:").append(vehicleId);
+        String selectedColumnsSearchString = SearchFormatter.formatMeasurementsAsSearchString(measurementsRequired);
+        StringBuilder cql = new StringBuilder("SELECT ").append(selectedColumnsSearchString)
+                .append(" FROM datastax.vehicle_historical_readings WHERE solr_query = '{\"q\": \" vehicle_id:").append(vehicleId);
 
         if (area != null) {
             cql.append(" AND ").append(SearchFormatter.formatAreaAsSearchString(area));
@@ -147,31 +145,41 @@ public class VehicleSearchDao {
         List<Row> allRows = resultSet.all();
         List<VehicleReadingRow> readingRows = new ArrayList<>();
         for (Row row : allRows) {
-            readingRows.add(buildVehicleReadingRow(row));
+            readingRows.add(buildVehicleReadingRow(row, measurementsRequired));
         }
 
         return readingRows;
     }
 
-    private VehicleReadingRow buildVehicleReadingRow(Row row) {
+    private VehicleReadingRow buildVehicleReadingRow(Row row, boolean measurementsRequired) {
         if (row == null) {
+            System.out.println("Null row, returning...");
             return null;
         }
 
-        String vehicleId = row.getString("vehicle");
+        // this is always going to be there
+        String vehicleId = row.getString("vehicle_id");
         DateTime readingTimestamp = new DateTime(row.getTimestamp("date"));
-        Double tempValue = row.getDouble("temperature");
-        Double speedValue = row.getDouble("speed");
-
         Point lat_long = (Point) row.getObject("lat_long");
         Double lat = lat_long.X();
         Double lng = lat_long.Y();
 
         VehicleReadingRow readingRow = new VehicleReadingRow(vehicleId, readingTimestamp, lat, lng);
-        readingRow.addMeasurement("speed", speedValue);
-        readingRow.addMeasurement("temperature", tempValue);
+
+        // if select * then read all measurements - the named ones + the map
+        if (measurementsRequired) {
+            Double speedValue = row.getDouble("speed");
+            Double tempValue = row.getDouble("temperature");
+            Map<String, Double> properties = row.getMap("p_", String.class, Double.class);
+
+            readingRow.addMeasurement("speed", speedValue);
+            readingRow.addMeasurement("temperature", tempValue);
+            for (String propName : properties.keySet()) {
+                readingRow.addMeasurement(propName, properties.get(propName));
+            }
+        }
 
         return readingRow;
     }
 
-}
+ }
