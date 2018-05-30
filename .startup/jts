@@ -1,0 +1,31 @@
+#!/bin/bash
+
+set -x
+
+if [[ $HOSTNAME == "node"* ]] ; then
+    #rightscale
+    DEST=/usr/share/dse/solr/lib/jts-core-1.14.0.jar
+    RESTART="sudo service dse restart"
+fi
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    # Mac OSX
+    if [ -d ~/Documents/dse ]; then
+      # Control will enter here if $DIRECTORY exists.
+      DEST=~/Documents/dse/resources/solr/lib/jts-core-1.14.0.jar
+    fi
+    RESTART="dse cassandra-stop ; dse cassandra -s -k -g"
+fi
+
+# DEST is not set
+if [ -z "$DEST" ]; then
+    echo "Set env variable DEST as your dse directory to pull jts"
+    exit 1
+fi
+
+# jar is not in DEST yet
+if [ ! -f "$DEST" ]; then
+  curl http://central.maven.org/maven2/com/vividsolutions/jts-core/1.14.0/jts-core-1.14.0.jar -o $DEST
+  eval $RESTART
+else
+  echo "JTS is already in the lib dir"
+fi
