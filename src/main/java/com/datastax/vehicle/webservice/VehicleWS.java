@@ -1,6 +1,7 @@
 package com.datastax.vehicle.webservice;
 
 import java.util.List;
+import java.util.Map;
 
 import javax.jws.WebService;
 import javax.ws.rs.*;
@@ -252,4 +253,18 @@ public class VehicleWS {
 	}
 
 	// TODO add API for heatmap
+	@POST
+	@Path("/heatmap/vehicles/latest")
+	public Response retrieveCurrentHeatmapByGeoTile(HeatmapRequestInputWrapper inputWrapper) {
+		ValidationOutcome valOut = WSInputValidator.validateHeatmapRequestInputWrapper(inputWrapper);
+
+		if (!valOut.isValid()) {
+			return Response.status(400).entity(valOut.getValidationMessagesAsSingleString()).build();
+		}
+
+		Map<String, Integer> result = service.retrieveCurrentVehicleCountByGeoTile(inputWrapper.getGeoHashLevel(),
+																	inputWrapper.getArea(), inputWrapper.getFilter());
+
+		return Response.status(201).entity(result).build();
+	}
 }

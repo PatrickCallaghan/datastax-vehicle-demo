@@ -70,6 +70,34 @@ public class WSInputValidator {
         return valOut;
     }
 
+    public static ValidationOutcome validateHeatmapRequestInputWrapper(HeatmapRequestInputWrapper inputWrapper) {
+
+        ValidationOutcome valOut = new ValidationOutcome();
+
+        Integer geoHashLevel = inputWrapper.getGeoHashLevel();
+        Area area =  inputWrapper.getArea();
+        Timeframe timeframe = inputWrapper.getTimeframe();
+
+        if (geoHashLevel == null) {
+            valOut.addMessage("Geohash level is mandatory but was not specified");
+        }
+
+        if (geoHashLevel < 5 || geoHashLevel > 11) {
+            valOut.addMessage("Geohash level out of bounds: it must be between 5 and 11 (both values included). " +
+                                "Level specified is " + geoHashLevel);
+        }
+
+        if (area != null) {
+            valOut.addMessage(validateArea(area));
+        }
+
+        if (timeframe != null) {
+            valOut.addMessage(validateTimeframe(timeframe));
+        }
+
+        return valOut;
+    }
+
     private static String validateArea(Area area) {
         Polygon polygon = area.getPolygon();
         Circle circle = area.getCircle();
@@ -117,6 +145,7 @@ public class WSInputValidator {
 
         return null;
     }
+
 
 //    private static String validateMeasurementSubset(MeasurementSubset ms) {
 //        if (ms.isAllMeasurements()) {

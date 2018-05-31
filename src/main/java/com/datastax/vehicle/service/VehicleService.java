@@ -2,6 +2,7 @@ package com.datastax.vehicle.service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import com.datastax.vehicle.dao.VehicleReadingRow;
 import com.datastax.vehicle.dao.VehicleSearchDao;
@@ -105,4 +106,7 @@ public class VehicleService {
 		return result;
 	}
 
+	public Map<String,Integer> retrieveCurrentVehicleCountByGeoTile(Integer geoHashLevel, Area area, String filter) {
+		return searchDao.retrieveCurrentVehicleCountByGeoTile(geoHashLevel, area, filter);
+	}
 }

@@ -1,23 +1,38 @@
 package com.datastax.vehicle.dao;
 
+import com.datastax.demo.codecs.JacksonNodeTypeCodec;
 import com.datastax.demo.utils.SearchFormatter;
+import com.datastax.driver.core.CodecRegistry;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
+import com.datastax.driver.core.TypeCodec;
 import com.datastax.driver.dse.DseCluster;
 import com.datastax.driver.dse.DseSession;
 import com.datastax.driver.dse.geometry.Point;
 import com.datastax.vehicle.webservice.resources.*;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.joda.time.DateTime;
 
 import java.util.*;
 
 public class VehicleSearchDao {
 
+    private static int PORT = 9042;
+
     private DseSession session;
 
     public VehicleSearchDao(String[] contactPoints) {
 
-        DseCluster cluster = DseCluster.builder().addContactPoints(contactPoints).build();
+        TypeCodec<JsonNode> jsonCodec = new JacksonNodeTypeCodec();
+
+        DseCluster cluster = DseCluster.builder()
+                .addContactPoints(contactPoints).withPort(PORT)
+                .withCodecRegistry(new CodecRegistry()
+                        .register(jsonCodec))
+                .build();
+
         session = cluster.connect();
 
     }
@@ -151,6 +166,46 @@ public class VehicleSearchDao {
         return readingRows;
     }
 
+
+    public Map<String,Integer> retrieveCurrentVehicleCountByGeoTile(Integer geoHashLevel, Area area, String filter) {
+
+        StringBuilder cql = new StringBuilder("SELECT * FROM datastax.vehicle_current_reading WHERE solr_query = '{\"q\": \"");
+
+        boolean optionalConstraintSpecified = false;
+
+        if (area != null) {
+            cql.append(SearchFormatter.formatAreaAsSearchString(area));
+            optionalConstraintSpecified = true;
+        }
+
+        if (filter != null) {
+            if (optionalConstraintSpecified) {
+                cql.append(" AND ");
+            }
+            cql.append(SearchFormatter.formatFilterAsSearchString(filter));
+            optionalConstraintSpecified = true;
+        }
+
+        if (!optionalConstraintSpecified) {
+            cql.append("*:*");
+        }
+        cql.append("\", ");
+
+        cql.append("\"facet\":{\"field\":\"geohash\",\"prefix\":").append(geoHashLevel).append("} }'");
+
+        System.out.println("retrieveCurrentVehicleCountByGeoTile. Executing query: " + cql.toString());
+
+        ResultSet resultSet = session.execute(cql.toString());
+        //String facetMapJSON = resultSet.all().get(0).getString(0);
+        Row row = resultSet.one();
+        JsonNode geoHashNode = row.get("facet_fields", JsonNode.class).path("geohash");
+
+        ObjectMapper mapper = new ObjectMapper();
+        Map<String, Integer> result = mapper.convertValue(geoHashNode, Map.class);
+
+        return result;
+    }
+
     private VehicleReadingRow buildVehicleReadingRow(Row row, boolean measurementsRequired) {
         if (row == null) {
             System.out.println("Null row, returning...");
@@ -182,4 +237,4 @@ public class VehicleSearchDao {
         return readingRow;
     }
 
- }
+}

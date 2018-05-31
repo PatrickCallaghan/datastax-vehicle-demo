@@ -47,7 +47,7 @@
        that you fully re-index after changing this setting as it can
        affect both how text is indexed and queried.
     -->
-  <luceneMatchVersion>LUCENE_40</luceneMatchVersion>
+  <luceneMatchVersion>LUCENE_60</luceneMatchVersion>
   
   <!-- Enable DSE Search new type mappings -->
   <dseTypeMappingVersion>1</dseTypeMappingVersion>
@@ -76,16 +76,6 @@
   <!--
   <lib path="../a-jar-that-does-not-exist.jar" /> 
   -->
-  
-  <!-- Data Directory
-
-       Used to specify an alternate directory to hold all index data
-       other than the default ./data under the Solr home.  If
-       replication is in use, this should match the replication
-       configuration.
-    -->
-  <dataDir>${solr.data.dir:}</dataDir>
-
 
   <!-- The DirectoryFactory to use for indexes.
        
@@ -98,8 +88,8 @@
        solr.RAMDirectoryFactory is memory based, not
        persistent, and doesn't work with replication.
     -->
-  <directoryFactory name="DirectoryFactory" 
-                    class="com.datastax.bdp.cassandra.index.solr.DSENRTCachingDirectoryFactory"/>
+  <directoryFactory name="DirectoryFactory" class="solr.StandardDirectoryFactory"/>
+
   <indexConfig>
 
     <useCompoundFile>false</useCompoundFile>
@@ -134,19 +124,19 @@
          http://lucene.apache.org/java/2_9_1/api/all/org/apache/lucene/index/IndexDeletionPolicy.html
 
          The standard Solr IndexDeletionPolicy implementation supports
-         deleting index commit points on number of commits, age of
-         commit point and optimized status.
+         deleting index commit geoPoints on number of commits, age of
+         commit geoPoint and optimized status.
          
-         The latest commit point should always be preserved regardless
+         The latest commit geoPoint should always be preserved regardless
          of the criteria.
     -->
     <deletionPolicy class="solr.SolrDeletionPolicy">
-      <!-- The number of commit points to be kept -->
+      <!-- The number of commit geoPoints to be kept -->
       <str name="maxCommitsToKeep">1</str>
-      <!-- The number of optimized commit points to be kept -->
+      <!-- The number of optimized commit geoPoints to be kept -->
       <str name="maxOptimizedCommitsToKeep">0</str>
       <!--
-          Delete all commit points once they have reached the given age.
+          Delete all commit geoPoints once they have reached the given age.
           Supports DateMathParser syntax e.g.
         -->
       <!--
@@ -770,27 +760,6 @@
                   class="solr.JsonUpdateRequestHandler" 
                   startup="lazy" />
 
-  <!-- Solr Cell Update Request Handler
-
-       http://wiki.apache.org/solr/ExtractingRequestHandler 
-
-    -->
-  <requestHandler name="/update/extract" 
-                  startup="lazy"
-                  class="solr.extraction.ExtractingRequestHandler" >
-    <lst name="defaults">
-      <!-- All the main content goes into "text"... if you need to return
-           the extracted text or do highlighting, use a stored field. -->
-      <str name="fmap.content">text</str>
-      <str name="lowernames">true</str>
-      <str name="uprefix">ignored_</str>
-
-      <!-- capture link hrefs but ignore div attributes -->
-      <str name="captureAttr">true</str>
-      <str name="fmap.a">links</str>
-      <str name="fmap.div">ignored_</str>
-    </lst>
-  </requestHandler>
 
   <!-- XSLT Update Request Handler
        Transforms incoming XML with stylesheet identified by tr=

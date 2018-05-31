@@ -2,6 +2,7 @@ import com.datastax.vehicle.webservice.resources.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -162,6 +163,18 @@ public class TestToAndFromJSON {
         String resultAsString = mapper.writeValueAsString(iw);
 
         System.out.println(resultAsString);
+
+    }
+
+    @Test
+    public void testTranslateFacetsFromStringToJSON() throws IOException {
+        String facetRow = "{\"6u0xgmn\":15,\"6u0xu67\":33,\"6u0xv1y\":12}";
+
+        ObjectMapper mapper = new ObjectMapper();
+        Map<String,Integer> facets = mapper.readValue(facetRow, HashMap.class);
+
+        System.out.println("map size " + facets.size());
+        System.out.println("map keyset " + facets.keySet());
 
     }
 

@@ -71,7 +71,7 @@ public class Vehicle {
 		String geoHash =  GeoHash.encodeHash(latLong.getLat(),latLong.getLon());
 		for (int i = LARGEST_GEOHASH_TILE ; i < SMALLEST_GEOHASH_TILE ; i++){
 			String thisHash = geoHash.substring(0,i);
-			hashList.add( i + thisHash );
+			hashList.add( i + thisHash );	// prefix the hash with its length
 		}
 		return hashList;
 	}
