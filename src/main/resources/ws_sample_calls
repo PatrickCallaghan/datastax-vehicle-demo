@@ -1,0 +1,249 @@
+All calls are @POST
+
+
+@Path("/area/vehicles/readings/latest")
+Example JSON request:
+{
+    "area": {
+        "polygon": {
+            "geoPoints": [
+                {
+                    "lat": 48.736989,
+                    "lng": 10.271339
+                },
+                {
+                    "lat": 48.067576,
+                    "lng": 11.60903
+                },
+                {
+                    "lat": 48.774243,
+                    "lng": 12.91312
+                },
+                {
+                    "lat": 49.595759,
+                    "lng": 11.123788
+                },
+                {
+                    "lat": 48.736989,
+                    "lng": 10.271339
+                }
+            ]
+        },
+        "circle": null
+    },
+    "timeframe": null,
+    "measurementsRequired": false,
+    "order": null,
+    "filter": null
+}
+
+
+@Path("/area/vehicles/readings/history")
+Example JSON request:
+{
+    "area": {
+        "polygon": {
+            "geoPoints": [
+                {
+                    "lat": 48.736989,
+                    "lng": 10.271339
+                },
+                {
+                    "lat": 48.067576,
+                    "lng": 11.60903
+                },
+                {
+                    "lat": 48.774243,
+                    "lng": 12.91312
+                },
+                {
+                    "lat": 49.595759,
+                    "lng": 11.123788
+                },
+                {
+                    "lat": 48.736989,
+                    "lng": 10.271339
+                }
+            ]
+        },
+        "circle": null
+    },
+    "timeframe": {
+        "startDate": "2018/05/10 01:10:55",
+        "endDate": "2018/05/31 23:14:12"
+    },
+    "measurementsRequired": false,
+    "order": {
+        "ascending": false
+    },
+    "filter": null
+}
+
+
+@Path("/vehicle/readings/latest")
+Example JSON request:
+{
+    "vehicleId": "989",
+    "area": {
+        "polygon": {
+            "geoPoints": [
+                {
+                    "lat": 48.736989,
+                    "lng": 10.271339
+                },
+                {
+                    "lat": 48.067576,
+                    "lng": 11.60903
+                },
+                {
+                    "lat": 48.774243,
+                    "lng": 12.91312
+                },
+                {
+                    "lat": 49.595759,
+                    "lng": 11.123788
+                },
+                {
+                    "lat": 48.736989,
+                    "lng": 10.271339
+                }
+            ]
+        },
+        "circle": null
+    },
+    "timeframe": {
+        "startDate": "2018/05/10 01:10:55",
+        "endDate": "2018/05/31 23:14:12"
+    },
+    "measurementsRequired": false,
+    "order": {
+        "ascending": false
+    },
+    "filter": null
+}
+
+
+@Path("/vehicle/readings/history")
+Example JSON request:
+{
+    "vehicleId": "989",
+    "area": {
+        "polygon": {
+            "geoPoints": [
+                {
+                    "lat": 48.736989,
+                    "lng": 10.271339
+                },
+                {
+                    "lat": 48.067576,
+                    "lng": 11.60903
+                },
+                {
+                    "lat": 48.774243,
+                    "lng": 12.91312
+                },
+                {
+                    "lat": 49.595759,
+                    "lng": 11.123788
+                },
+                {
+                    "lat": 48.736989,
+                    "lng": 10.271339
+                }
+            ]
+        },
+        "circle": null
+    },
+    "timeframe": {
+        "startDate": "2018/05/10 01:10:55",
+        "endDate": "2018/05/31 23:14:12"
+    },
+    "measurementsRequired": false,
+    "order": {
+        "ascending": false
+    },
+    "filter": null
+}
+
+
+@Path("aggregates/vehicles/latest")
+Example JSON request:
+{
+    "geoHashLevel": 5,
+    "area": {
+        "polygon": {
+            "geoPoints": [
+                {
+                    "lat": 48.736989,
+                    "lng": 10.271339
+                },
+                {
+                    "lat": 48.067576,
+                    "lng": 11.60903
+                },
+                {
+                    "lat": 48.774243,
+                    "lng": 12.91312
+                },
+                {
+                    "lat": 49.595759,
+                    "lng": 11.123788
+                },
+                {
+                    "lat": 48.736989,
+                    "lng": 10.271339
+                }
+            ]
+        },
+        "circle": null
+    },
+    "filter": null
+}
+
+Or also:
+{
+    "geoHashLevel":5,
+    "area":null,
+    "filter":null
+}
+
+
+@Path("/aggregates/vehicles/history")
+{
+    "geoHashLevel": 5,
+    "area": {
+        "polygon": {
+            "geoPoints": [
+                {
+                    "lat": 48.736989,
+                    "lng": 10.271339
+                },
+                {
+                    "lat": 48.067576,
+                    "lng": 11.60903
+                },
+                {
+                    "lat": 48.774243,
+                    "lng": 12.91312
+                },
+                {
+                    "lat": 49.595759,
+                    "lng": 11.123788
+                },
+                {
+                    "lat": 48.736989,
+                    "lng": 10.271339
+                }
+            ]
+        },
+        "circle": null
+    },
+    "timeframe": {
+        "startDate": "2018/05/10 01:10:55",
+        "endDate": "2018/05/31 23:14:12"
+    },
+    "filter": null
+}
+
+
+

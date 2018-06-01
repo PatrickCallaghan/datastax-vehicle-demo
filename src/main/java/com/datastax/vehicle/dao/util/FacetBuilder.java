@@ -12,7 +12,7 @@ public class FacetBuilder {
     public static String buildFacetingClauseByGeoHashAndVehicle(Integer geoHashLevel) {
         StringBuilder sb = new StringBuilder();
         sb.append("\"facet\":{\"field\":[\"geohash\",\"vehicle_id\"], \"f.geohash.prefix\":")
-                .append(geoHashLevel).append("} }'");
+                .append(geoHashLevel).append("} ");
         return sb.toString();
     }
 }
