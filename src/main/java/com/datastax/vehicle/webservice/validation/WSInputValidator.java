@@ -70,7 +70,7 @@ public class WSInputValidator {
         return valOut;
     }
 
-    public static ValidationOutcome validateHeatmapRequestInputWrapper(HeatmapRequestInputWrapper inputWrapper) {
+    public static ValidationOutcome validateHeatmapRequestInputWrapper(AggregateRequestInputWrapper inputWrapper) {
 
         ValidationOutcome valOut = new ValidationOutcome();
 

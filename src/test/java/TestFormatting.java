@@ -1,4 +1,4 @@
-import com.datastax.demo.utils.SearchFormatter;
+import com.datastax.vehicle.dao.util.SearchFormatter;
 import com.datastax.vehicle.webservice.resources.Area;
 import com.datastax.vehicle.webservice.resources.GeoPoint;
 import com.datastax.vehicle.webservice.resources.Polygon;
@@ -43,6 +43,6 @@ public class TestFormatting {
         p.addGeoPoints(pt1, pt2, pt3);
 
         Area a = new Area(p);
-        System.out.println(SearchFormatter.formatAreaAsSearchString(a));
+        //System.out.println(SearchFormatter.formatAreaAsSearchString(a));
     }
 }

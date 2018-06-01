@@ -1,7 +1,6 @@
 package com.datastax.vehicle.dao;
 
 import com.datastax.demo.codecs.JacksonNodeTypeCodec;
-import com.datastax.demo.utils.SearchFormatter;
 import com.datastax.driver.core.CodecRegistry;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
@@ -9,10 +8,13 @@ import com.datastax.driver.core.TypeCodec;
 import com.datastax.driver.dse.DseCluster;
 import com.datastax.driver.dse.DseSession;
 import com.datastax.driver.dse.geometry.Point;
+import com.datastax.vehicle.dao.util.FacetBuilder;
+import com.datastax.vehicle.dao.util.QClauseBuilder;
+import com.datastax.vehicle.dao.util.SearchFormatter;
+import com.datastax.vehicle.dao.util.SortClauseBuilder;
 import com.datastax.vehicle.webservice.resources.*;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.joda.time.DateTime;
 
 import java.util.*;
@@ -39,16 +41,12 @@ public class VehicleSearchDao {
 
     public List<VehicleReadingRow> getCurrentReadingsPerArea(Area area, String filter, boolean measurementsRequired) {
 
-        String areaSearchString = SearchFormatter.formatAreaAsSearchString(area);
         String selectedColumnsSearchString = SearchFormatter.formatMeasurementsAsSearchString(measurementsRequired) ;
 
         StringBuilder cql = new StringBuilder("SELECT ").append(selectedColumnsSearchString)
-                .append(" FROM datastax.vehicle_current_reading WHERE solr_query = '{\"q\":\"").append(areaSearchString);
+                .append(" FROM datastax.vehicle_current_reading WHERE solr_query = '{\"q\": \"");
 
-        if (filter != null && !filter.isEmpty()) {
-            cql.append(" AND ").append(SearchFormatter.formatFilterAsSearchString(filter));
-        }
-        cql.append("\"}' LIMIT 100");
+        cql.append(QClauseBuilder.generateQClause(area, null, filter)).append("\"}' ");
 
         System.out.println("getCurrentReadingsPerArea. Executing query: " + cql.toString());
 
@@ -67,24 +65,18 @@ public class VehicleSearchDao {
                                                                              String filter, Order order,
                                                                             boolean measurementsRequired) {
 
-        String areaSearchString = SearchFormatter.formatAreaAsSearchString(area);
         String selectedColumnsSearchString = SearchFormatter.formatMeasurementsAsSearchString(measurementsRequired) ;
-        String timeframeSearchString = SearchFormatter.formatTimeframeAsSearchString(timeframe);
 
-        // Area and timeframe are mandatory here
         StringBuilder cql = new StringBuilder("SELECT ").append(selectedColumnsSearchString)
-                .append(" FROM datastax.vehicle_historical_readings WHERE solr_query = '{\"q\": \"")
-                .append(areaSearchString).append(" AND ").append(timeframeSearchString);
+                .append(" FROM datastax.vehicle_historical_readings WHERE solr_query = '{\"q\": \"");
 
-        if (filter != null && !filter.isEmpty()) {
-            cql.append(" AND ").append(SearchFormatter.formatFilterAsSearchString(filter));
-        }
+        cql.append(QClauseBuilder.generateQClause(area, timeframe, filter)).append("\" ");
 
         if (order != null) {
-            cql.append("\"").append(SearchFormatter.formatOrderAsSearchString(order));
+            cql.append(SortClauseBuilder.generateSortClause(order));
         }
 
-        cql.append("}' LIMIT 100");
+        cql.append("}' ");
 
         System.out.println("getHistoricalReadingsPerAreaAndTimeframe. Executing query: " + cql.toString());
 
@@ -105,23 +97,12 @@ public class VehicleSearchDao {
         String selectedColumnsSearchString = SearchFormatter.formatMeasurementsAsSearchString(measurementsRequired);
         StringBuilder cql = new StringBuilder("SELECT ")
                             .append(selectedColumnsSearchString)
-                            .append(" FROM datastax.vehicle_historical_readings WHERE solr_query = '{\"q\": \" vehicle_id:").append(vehicleId);
+                            .append(" FROM datastax.vehicle_historical_readings WHERE solr_query = '{\"q\": \"");
 
-        if (area != null) {
-            cql.append(" AND ").append(SearchFormatter.formatAreaAsSearchString(area));
-        }
-        if (timeframe != null) {
-            cql.append(" AND ").append(SearchFormatter.formatTimeframeAsSearchString(timeframe));
-        }
+        cql.append(QClauseBuilder.generateQClause(vehicleId, area, timeframe, filter)).append("\" ");
 
-        if (filter != null && !filter.isEmpty()) {
-            cql.append(" AND ").append(SearchFormatter.formatFilterAsSearchString(filter));
-        }
-        cql.append("\" ");
         // order any results by time descending, as only the most recent one must be returned
-        cql.append(SearchFormatter.formatOrderAsSearchString(new Order()));
-
-        cql.append("}' LIMIT 1");
+        cql.append(SortClauseBuilder.generateSortClause(new Order())).append("}' LIMIT 1");
 
         System.out.println("getLatestVehicleReading. Executing query: " + cql.toString());
 
@@ -135,24 +116,14 @@ public class VehicleSearchDao {
 
         String selectedColumnsSearchString = SearchFormatter.formatMeasurementsAsSearchString(measurementsRequired);
         StringBuilder cql = new StringBuilder("SELECT ").append(selectedColumnsSearchString)
-                .append(" FROM datastax.vehicle_historical_readings WHERE solr_query = '{\"q\": \" vehicle_id:").append(vehicleId);
+                .append(" FROM datastax.vehicle_historical_readings WHERE solr_query = '{\"q\": \" ");
 
-        if (area != null) {
-            cql.append(" AND ").append(SearchFormatter.formatAreaAsSearchString(area));
-        }
-        if (timeframe != null) {
-            cql.append(" AND ").append(SearchFormatter.formatTimeframeAsSearchString(timeframe));
-        }
-
-        if (filter != null && !filter.isEmpty()) {
-            cql.append(" AND ").append(SearchFormatter.formatFilterAsSearchString(filter));
-        }
-        cql.append("\" ");
+        cql.append(QClauseBuilder.generateQClause(vehicleId, area, timeframe, filter)).append("\" ");
 
         if (order != null) {
-            cql.append(SearchFormatter.formatOrderAsSearchString(new Order(false)));
+            cql.append(SortClauseBuilder.generateSortClause(order));
         }
-        cql.append("}' LIMIT 100");
+        cql.append("}' ");
 
         System.out.println("getHistoricalVehicleReadings. Executing query: " + cql.toString());
 
@@ -167,44 +138,49 @@ public class VehicleSearchDao {
     }
 
 
-    public Map<String,Integer> retrieveCurrentVehicleCountByGeoTile(Integer geoHashLevel, Area area, String filter) {
+    public AggregatedResultWrapper getLatestAggregatesByGeoHash(Integer geoHashLevel, Area area, String filter) {
 
         StringBuilder cql = new StringBuilder("SELECT * FROM datastax.vehicle_current_reading WHERE solr_query = '{\"q\": \"");
 
-        boolean optionalConstraintSpecified = false;
+        cql.append(QClauseBuilder.generateQClause(area, null, filter)).append("\" ");
+        cql.append(", ").append(FacetBuilder.buildFacetingClauseByGeoHashOnly(geoHashLevel)).append("} }'");
 
-        if (area != null) {
-            cql.append(SearchFormatter.formatAreaAsSearchString(area));
-            optionalConstraintSpecified = true;
-        }
-
-        if (filter != null) {
-            if (optionalConstraintSpecified) {
-                cql.append(" AND ");
-            }
-            cql.append(SearchFormatter.formatFilterAsSearchString(filter));
-            optionalConstraintSpecified = true;
-        }
-
-        if (!optionalConstraintSpecified) {
-            cql.append("*:*");
-        }
-        cql.append("\", ");
-
-        cql.append("\"facet\":{\"field\":\"geohash\",\"prefix\":").append(geoHashLevel).append("} }'");
-
-        System.out.println("retrieveCurrentVehicleCountByGeoTile. Executing query: " + cql.toString());
+        System.out.println("getLatestAggregatesByGeoHash. Executing query: " + cql.toString());
 
         ResultSet resultSet = session.execute(cql.toString());
-        //String facetMapJSON = resultSet.all().get(0).getString(0);
         Row row = resultSet.one();
         JsonNode geoHashNode = row.get("facet_fields", JsonNode.class).path("geohash");
 
         ObjectMapper mapper = new ObjectMapper();
-        Map<String, Integer> result = mapper.convertValue(geoHashNode, Map.class);
+        Map<String, Integer> geoHashResult = mapper.convertValue(geoHashNode, Map.class);
 
-        return result;
+        return new AggregatedResultWrapper(geoHashResult, null);
     }
+
+
+    public AggregatedResultWrapper getHistoricalAggregatesByVehicleAndGeoHash(Integer geoHashLevel, Area area, Timeframe timeframe, String filter) {
+
+        StringBuilder cql = new StringBuilder("SELECT * FROM datastax.vehicle_historical_readings WHERE solr_query = '{\"q\": \"");
+
+        cql.append(QClauseBuilder.generateQClause(area, null, filter)).append("\" ");
+        cql.append(", ").append(FacetBuilder.buildFacetingClauseByGeoHashAndVehicle(geoHashLevel)).append("} }'");
+
+        System.out.println("getHistoricalAggregatesByVehicleAndGeoHash. Executing query: " + cql.toString());
+
+        ResultSet resultSet = session.execute(cql.toString());
+        Row row = resultSet.one();
+
+        ObjectMapper mapper = new ObjectMapper();
+
+        JsonNode geoHashNode = row.get("facet_fields", JsonNode.class).path("geohash");
+        Map<String, Integer> geoHashResult = mapper.convertValue(geoHashNode, Map.class);
+
+        JsonNode vehicleNode = row.get("facet_fields", JsonNode.class).path("vehicle_id");
+        Map<String, Integer> vehicleResult = mapper.convertValue(vehicleNode, Map.class);
+
+        return new AggregatedResultWrapper(geoHashResult, vehicleResult);
+    }
+
 
     private VehicleReadingRow buildVehicleReadingRow(Row row, boolean measurementsRequired) {
         if (row == null) {

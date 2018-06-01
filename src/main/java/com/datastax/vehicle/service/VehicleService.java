@@ -48,15 +48,6 @@ public class VehicleService {
 
 	/** New methods **/
 
-	/**
-	 * Retrieves latest reading of all vehicles in an area.
-	 *
-	 * If there is no timeframe, then the request will return the "current" position,
-	 * which actually is the latest registered position of any vehicle in the area up to now
-	 *
-	 * If a timeframe is specified, then the request will return the latest position for each vehicle that was
-	 * in that area in that timeframe.
-	 */
 	public List<VehicleReading> retrieveLatestReadingOfVehicles(Area area, Timeframe timeframe, String filter,
 																boolean measurementsRequired) {
 		List<VehicleReading> result = new ArrayList<>();
@@ -106,7 +97,18 @@ public class VehicleService {
 		return result;
 	}
 
-	public Map<String,Integer> retrieveCurrentVehicleCountByGeoTile(Integer geoHashLevel, Area area, String filter) {
-		return searchDao.retrieveCurrentVehicleCountByGeoTile(geoHashLevel, area, filter);
+	public AggregatedResultWrapper retrieveLatestAggregatesByGeoHash(Integer geoHashLevel, Area area, String filter) {
+		return searchDao.getLatestAggregatesByGeoHash(geoHashLevel, area, filter);
+	}
+
+	public AggregatedResultWrapper retrieveHistoricalAggregatesByVehicleAndGeoHash(Integer geoHashLevel, Area area,
+																				   Timeframe timeframe, String filter) {
+
+		// SELECT * FROM datastax.vehicle_historical_readings
+		// //WHERE solr_query = '{"q": " lat_long:\"IsWithin(POLYGON((48.736989 10.271339, 48.067576 11.60903, 48.774243 12.91312,
+		// 49.595759 11.123788, 48.736989 10.271339)) )\"  AND  date:[2018-05-10T01:10:055Z TO 2018-05-25T23:14:012Z] " ,
+		// "facet":{ "field":["geohash","vehicle_id"], "f.geohash.prefix":5 } }';
+
+		return searchDao.getHistoricalAggregatesByVehicleAndGeoHash(geoHashLevel, area, timeframe, filter) ;
 	}
 }

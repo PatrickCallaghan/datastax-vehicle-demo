@@ -1,7 +1,6 @@
 package com.datastax.vehicle.webservice;
 
 import java.util.List;
-import java.util.Map;
 
 import javax.jws.WebService;
 import javax.ws.rs.*;
@@ -104,15 +103,13 @@ public class VehicleWS {
 		return Response.status(201).entity(result).build();
 	}
 
-	/**** By area ****/
+	/**** APIs by area ****/
 
 	/**
 	 * Get the latest reading of each vehicle in the selected area in the specified point in time or timeframe
 	 *
 	 * Input is a GlobalRequestInputWrapper containing:
 	 *   - Area: mandatory. It can be a polygon or a circle.
-	 *   - Timeframe: optional. If not specified, the request is considered for current data.
-	 *        For specific point in time, set start date the same as end date
 	 *   - MeasurementSubset: optional. If specified, it defines what measurements should be returned for each reading
 	 *
  	 * @return a list of VehicleReading objects, representing the latest for each vehicle in the area and timeframe.
@@ -175,8 +172,7 @@ public class VehicleWS {
 		return Response.status(201).entity(result).build();
 	}
 
-
-	/**** By vehicle ****/
+	/**** APIs by vehicle ****/
 
 	/**
 	 * Get the latest reading of the requested vehicle in the selected area in the specified point in time or timeframe
@@ -252,18 +248,64 @@ public class VehicleWS {
 		return Response.status(201).entity(result).build();
 	}
 
-	// TODO add API for heatmap
+	/**** Heatmap APIs ****/
+
+	/**
+	 * Get the count of vehicles currently in each geohash tile with the specified granularity level.
+	 * This is only based off current data so it doesn't support timeframe as a parameter.
+	 * Input is a AggregateRequestInputWrapper containing:
+	 *   - GeoHashLevel: mandatory. Length of the geohash code for each tile, which determines how large the tile is. Must be between 5 and 11 (included)
+	 *   - Area: optional. It can be a polygon or a circle.
+	 *   - Filter: optional. Just a Search snippet defining the custom filtering logic. It contains conditions on one or more properties
+	 *
+	 * @return a map with key: geohash code of each tile, and value: the count of vehicles currently in that tile
+	 */
 	@POST
-	@Path("/heatmap/vehicles/latest")
-	public Response retrieveCurrentHeatmapByGeoTile(HeatmapRequestInputWrapper inputWrapper) {
+	@Path("/aggregates/vehicles/latest")
+	public Response retrieveCurrentVehiclesAggregatedByGeoHash(AggregateRequestInputWrapper inputWrapper) {
 		ValidationOutcome valOut = WSInputValidator.validateHeatmapRequestInputWrapper(inputWrapper);
 
 		if (!valOut.isValid()) {
 			return Response.status(400).entity(valOut.getValidationMessagesAsSingleString()).build();
 		}
 
-		Map<String, Integer> result = service.retrieveCurrentVehicleCountByGeoTile(inputWrapper.getGeoHashLevel(),
+		AggregatedResultWrapper result = service.retrieveLatestAggregatesByGeoHash(inputWrapper.getGeoHashLevel(),
 																	inputWrapper.getArea(), inputWrapper.getFilter());
+
+		return Response.status(201).entity(result).build();
+	}
+
+	/**
+	 * Based on all the readings of all vehicles in the specified area during the requested timeframe,
+	 * this retrieves two independently faceted results:
+	 *   - Facet by geohash map of the desired level
+	 *   - Facet by vehicle over the entire area
+	 *
+	 * Input is a AggregateRequestInputWrapper containing:
+	 *   - GeoHashLevel: mandatory. Length of the geohash code for each tile, which determines how large the tile is. Must be between 5 and 11 (included)
+	 *   - Timeframe: mandatory.
+	 *   - Area: optional. It can be a polygon or a circle.
+	 *   - Filter: optional. Just a Search snippet defining the custom filtering logic. It contains conditions on one or more properties
+	 *
+	 * @return a map with key: geohash code of each tile, and value: the count of vehicles currently in that tile
+	 */
+	@POST
+	@Path("/aggregates/vehicles/history")
+	public Response retrieveHistoricalReadingsAggregatedByVehicleAndGeoHash(AggregateRequestInputWrapper inputWrapper) {
+		ValidationOutcome valOut = WSInputValidator.validateHeatmapRequestInputWrapper(inputWrapper);
+
+		if (!valOut.isValid()) {
+			return Response.status(400).entity(valOut.getValidationMessagesAsSingleString()).build();
+		}
+
+//		Map<String,TileAggregate> result = service.retrieveHistoricalVehicleAndReadingCountByGeoTile(
+//														inputWrapper.getGeoHashLevel(), inputWrapper.getArea(),
+//														inputWrapper.getTimeframe(), inputWrapper.getFilter());
+
+		AggregatedResultWrapper result = service.retrieveHistoricalAggregatesByVehicleAndGeoHash(
+																inputWrapper.getGeoHashLevel(),
+																inputWrapper.getArea(), inputWrapper.getTimeframe(),
+																inputWrapper.getFilter());
 
 		return Response.status(201).entity(result).build();
 	}

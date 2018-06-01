@@ -1,6 +1,6 @@
 package com.datastax.vehicle.webservice.resources;
 
-public class HeatmapRequestInputWrapper {
+public class AggregateRequestInputWrapper {
 
     // is it possible to pass a bounding box and find all the geohashes within it?
     // if you wanted to limit the heatmap to an area of the map (e.g. a bounding box around southern Germany if you have
@@ -11,9 +11,9 @@ public class HeatmapRequestInputWrapper {
     private Timeframe timeframe;
     private String filter;
 
-    public HeatmapRequestInputWrapper() {}
+    public AggregateRequestInputWrapper() {}
 
-    public HeatmapRequestInputWrapper(Integer geoHashLevel) {
+    public AggregateRequestInputWrapper(Integer geoHashLevel) {
         this.geoHashLevel = geoHashLevel;
     }
 
