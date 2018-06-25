@@ -143,7 +143,7 @@ public class VehicleSearchDao {
         StringBuilder cql = new StringBuilder("SELECT * FROM datastax.vehicle_current_reading WHERE solr_query = '{\"q\": \"");
 
         cql.append(QClauseBuilder.generateQClause(area, null, filter)).append("\" ");
-        cql.append(", ").append(FacetBuilder.buildFacetingClauseByGeoHashOnly(geoHashLevel)).append("} }'");
+        cql.append(", ").append(FacetBuilder.buildFacetingClauseByGeoHashOnly(geoHashLevel)).append(" }'");
 
         System.out.println("getLatestAggregatesByGeoHash. Executing query: " + cql.toString());
 
@@ -163,7 +163,7 @@ public class VehicleSearchDao {
         StringBuilder cql = new StringBuilder("SELECT * FROM datastax.vehicle_historical_readings WHERE solr_query = '{\"q\": \"");
 
         cql.append(QClauseBuilder.generateQClause(area, null, filter)).append("\" ");
-        cql.append(", ").append(FacetBuilder.buildFacetingClauseByGeoHashAndVehicle(geoHashLevel)).append("} }'");
+        cql.append(", ").append(FacetBuilder.buildFacetingClauseByGeoHashAndVehicle(geoHashLevel)).append(" }'");
 
         System.out.println("getHistoricalAggregatesByVehicleAndGeoHash. Executing query: " + cql.toString());
 
