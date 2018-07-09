@@ -46,7 +46,7 @@ public class VehicleSearchDao {
         StringBuilder cql = new StringBuilder("SELECT ").append(selectedColumnsSearchString)
                 .append(" FROM datastax.vehicle_current_reading WHERE solr_query = '{\"q\": \"");
 
-        cql.append(QClauseBuilder.generateQClause(area, null, filter)).append("\"}' ");
+        cql.append(QClauseBuilder.generateQClause(area, null, filter)).append("\",\"paging\":\"driver\" }' ");
 
         System.out.println("getCurrentReadingsPerArea. Executing query: " + cql.toString());
 
@@ -75,8 +75,8 @@ public class VehicleSearchDao {
         if (order != null) {
             cql.append(SortClauseBuilder.generateSortClause(order));
         }
-
-        cql.append("}' ");
+        // pi changed/added paging:driver
+        cql.append(" , \"paging\":\"driver\"}'");
 
         System.out.println("getHistoricalReadingsPerAreaAndTimeframe. Executing query: " + cql.toString());
 
@@ -162,7 +162,7 @@ public class VehicleSearchDao {
 
         StringBuilder cql = new StringBuilder("SELECT * FROM datastax.vehicle_historical_readings WHERE solr_query = '{\"q\": \"");
 
-        cql.append(QClauseBuilder.generateQClause(area, null, filter)).append("\" ");
+        cql.append(QClauseBuilder.generateQClause(area, timeframe, filter)).append("\" ");
         cql.append(", ").append(FacetBuilder.buildFacetingClauseByGeoHashAndVehicle(geoHashLevel)).append(" }'");
 
         System.out.println("getHistoricalAggregatesByVehicleAndGeoHash. Executing query: " + cql.toString());
