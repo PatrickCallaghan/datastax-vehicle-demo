@@ -82,7 +82,7 @@ public class WSInputValidator {
             valOut.addMessage("Geohash level is mandatory but was not specified");
         }
 
-        if (geoHashLevel < 5 || geoHashLevel > 11) {
+        if (geoHashLevel < 3 || geoHashLevel > 7) {
             valOut.addMessage("Geohash level out of bounds: it must be between 5 and 11 (both values included). " +
                                 "Level specified is " + geoHashLevel);
         }

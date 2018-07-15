@@ -7,8 +7,8 @@ import com.github.davidmoten.geo.LatLong;
 
 public class Vehicle {
 
-	private final static int LARGEST_GEOHASH_TILE = 5;
-	private final static int SMALLEST_GEOHASH_TILE = 12;
+	private final static int LARGEST_GEOHASH_TILE = 3;
+	private final static int SMALLEST_GEOHASH_TILE = 7;
 	private String vehicleId;
 	private Date date;
 	private LatLong latLong;
