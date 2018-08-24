@@ -36,7 +36,12 @@ To continuously update the locations of the vehicles run
 To start the web server, in another terminal run 
 
 	mvn jetty:run
-	
+
+To view the UI simply point your browser at:
+	http://localhost:8080/datastax-vehicle-app/
+
+### the API is described below
+
 To find all movements of a vehicle use http://localhost:8080/datastax-vehicle-app/rest/getmovements/{vehicle}/{date} e.g.
 
 	http://localhost:8080/datastax-vehicle-app/rest/getmovements/1/20170412
