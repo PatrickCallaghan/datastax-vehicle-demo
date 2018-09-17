@@ -76,11 +76,11 @@ public class VehicleDao {
 	public void insertVehicleData(Vehicle vehicle) {
 
 		session.execute(insertVehicleHistReading.bind(vehicle.getVehicleId(), dateFormatter.format(vehicle.getDate()),
-				vehicle.getDate(), new Point(vehicle.getLatLong().getLat(), vehicle.getLatLong().getLon()),
+				vehicle.getDate(), new Point(vehicle.getLatLong().getLon(), vehicle.getLatLong().getLat()),
 				vehicle.getSpeed(), vehicle.getTemperature(), vehicle.getProperties(), vehicle.getGeoHashList()));
 
 		session.execute(insertVehicleCurrentReading.bind(vehicle.getVehicleId(),
-				new Point(vehicle.getLatLong().getLat(), vehicle.getLatLong().getLon()), vehicle.getDate(),
+				new Point(vehicle.getLatLong().getLon(), vehicle.getLatLong().getLat()), vehicle.getDate(),
 				vehicle.getSpeed(), vehicle.getTemperature(), vehicle.getProperties(), vehicle.getGeoHashList()));
 	}
 
@@ -233,6 +233,6 @@ public class VehicleDao {
 		Double lat = lat_long.X();
 		Double lng = lat_long.Y();
 
-		return new Vehicle(vehicleId, date, new LatLong(lat, lng), temperature, speed, properties);
+		return new Vehicle(vehicleId, date, new LatLong(lng, lat), temperature, speed, properties);
 	}
 }

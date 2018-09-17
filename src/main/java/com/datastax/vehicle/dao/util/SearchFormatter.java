@@ -61,7 +61,8 @@ public class SearchFormatter {
     }
 
     protected static String formatPointAsSearchString(GeoPoint p) {
-        return p.getLat() + " " + p.getLng();
+        //return p.getLng() + " " + p.getLat();
+        return p.getLng() + " " + p.getLat();
     }
 
     protected static String formatDateAsSearchString(String dateString) {
