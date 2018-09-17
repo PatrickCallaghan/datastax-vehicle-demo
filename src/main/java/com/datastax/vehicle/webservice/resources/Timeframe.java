@@ -16,7 +16,7 @@ import org.joda.time.format.DateTimeFormatter;
  */
 public class Timeframe {
 
-    private static DateTimeFormatter dtf = DateTimeFormat.forPattern("yyyy/MM/dd HH:mm:ss");
+    private static DateTimeFormatter dtf = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:sss'Z'");
 
     private String startDate;
     private String endDate;

@@ -8,10 +8,10 @@ import org.joda.time.format.DateTimeFormatter;
 
 public class WSInputValidator {
 
-    private static final String expectedDateFormat = "yyyy/MM/dd HH:mm:ss";
+    private static final String expectedDateFormat = "yyyy-MM-dd'T'HH:mm:sss'Z'";
 
     //2018/04/25 12:32:45
-    private static DateTimeFormatter dtf = DateTimeFormat.forPattern("yyyy/MM/dd HH:mm:ss");
+    private static DateTimeFormatter dtf = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:sss'Z'");
 
     public static ValidationOutcome validateGlobalRequestInputWrapper(GlobalRequestInputWrapper iw, boolean requiresTimeframe) {
 
