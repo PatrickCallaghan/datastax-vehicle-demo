@@ -192,8 +192,8 @@ public class VehicleSearchDao {
         String vehicleId = row.getString("vehicle_id");
         DateTime readingTimestamp = new DateTime(row.getTimestamp("date"));
         Point lat_long = (Point) row.getObject("lat_long");
-        Double lat = lat_long.X();
-        Double lng = lat_long.Y();
+        Double lat = lat_long.Y();
+        Double lng = lat_long.X();
 
         VehicleReadingRow readingRow = new VehicleReadingRow(vehicleId, readingTimestamp, lat, lng);
 
