@@ -11,7 +11,7 @@ import java.util.Iterator;
 public class SearchFormatter {
 
     //"yyyy/MM/dd HH:mm:ss"
-    private static DateTimeFormatter inputDateFormatter = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:sss'Z'");
+    private static DateTimeFormatter inputDateFormatter = DateTimeFormat.forPattern("yyyy/MM/dd HH:mm:ss");
     private static DateTimeFormatter searchDateFormatter = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:sss'Z'");
 
     public static String formatMeasurementsAsSearchString(boolean measurementsRequired) {
