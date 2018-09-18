@@ -230,9 +230,9 @@ public class VehicleDao {
 		// geohash list is not necessary here, as there is no need to return it
 		Map<String, Double> properties = row.getMap("p_", String.class, Double.class);
 
-		Double lat = lat_long.X();
-		Double lng = lat_long.Y();
+		Double lat = lat_long.Y();
+		Double lng = lat_long.X();
 
-		return new Vehicle(vehicleId, date, new LatLong(lng, lat), temperature, speed, properties);
+		return new Vehicle(vehicleId, date, new LatLong(lat, lng), temperature, speed, properties);
 	}
 }
