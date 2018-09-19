@@ -8,6 +8,7 @@ public class VehicleRequestInputWrapper {
     private Order order;
     private String filter;
     private boolean measurementsRequired;
+    private Integer pageSize;
 
     public VehicleRequestInputWrapper() {
     }
@@ -59,4 +60,8 @@ public class VehicleRequestInputWrapper {
     public void setMeasurementsRequired(boolean retrieveMeasurements) {
         this.measurementsRequired = retrieveMeasurements;
     }
+
+    public Integer getPageSize() { return pageSize; }
+
+    public void setPageSize(Integer pageSize) { this.pageSize = pageSize; }
 }

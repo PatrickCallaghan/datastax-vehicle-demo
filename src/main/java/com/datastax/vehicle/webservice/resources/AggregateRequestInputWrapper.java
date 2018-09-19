@@ -10,6 +10,7 @@ public class AggregateRequestInputWrapper {
     private Area area;
     private Timeframe timeframe;
     private String filter;
+    private Integer pageSize;
 
     public AggregateRequestInputWrapper() {}
 
@@ -48,4 +49,8 @@ public class AggregateRequestInputWrapper {
     public void setFilter(String filter) {
         this.filter = filter;
     }
+
+    public Integer getPageSize() { return pageSize; }
+
+    public void setPageSize(Integer pageSize) { this.pageSize = pageSize; }
 }

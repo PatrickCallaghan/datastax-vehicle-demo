@@ -1,17 +1,11 @@
 package com.datastax.vehicle.dao;
 
 import com.datastax.demo.codecs.JacksonNodeTypeCodec;
-import com.datastax.driver.core.CodecRegistry;
-import com.datastax.driver.core.ResultSet;
-import com.datastax.driver.core.Row;
-import com.datastax.driver.core.TypeCodec;
+import com.datastax.driver.core.*;
 import com.datastax.driver.dse.DseCluster;
 import com.datastax.driver.dse.DseSession;
 import com.datastax.driver.dse.geometry.Point;
-import com.datastax.vehicle.dao.util.FacetBuilder;
-import com.datastax.vehicle.dao.util.QClauseBuilder;
-import com.datastax.vehicle.dao.util.SearchFormatter;
-import com.datastax.vehicle.dao.util.SortClauseBuilder;
+import com.datastax.vehicle.dao.util.*;
 import com.datastax.vehicle.webservice.resources.*;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -22,6 +16,7 @@ import java.util.*;
 public class VehicleSearchDao {
 
     private static int PORT = 9042;
+    private static int DEFAULT_PAGE_SIZE = 1000;
 
     private DseSession session;
 
@@ -31,6 +26,7 @@ public class VehicleSearchDao {
 
         DseCluster cluster = DseCluster.builder()
                 .addContactPoints(contactPoints).withPort(PORT)
+                .withQueryOptions(new QueryOptions().setFetchSize(DEFAULT_PAGE_SIZE))
                 .withCodecRegistry(new CodecRegistry()
                         .register(jsonCodec))
                 .build();
@@ -39,18 +35,22 @@ public class VehicleSearchDao {
 
     }
 
-    public List<VehicleReadingRow> getCurrentReadingsPerArea(Area area, String filter, boolean measurementsRequired) {
+    public List<VehicleReadingRow> getCurrentReadingsPerArea(Area area, String filter,
+                                                             boolean measurementsRequired, Integer pageSize) {
 
         String selectedColumnsSearchString = SearchFormatter.formatMeasurementsAsSearchString(measurementsRequired) ;
 
         StringBuilder cql = new StringBuilder("SELECT ").append(selectedColumnsSearchString)
                 .append(" FROM datastax.vehicle_current_reading WHERE solr_query = '{\"q\": \"");
 
-        cql.append(QClauseBuilder.generateQClause(area, null, filter)).append("\",\"paging\":\"driver\" }' ");
+        cql.append(QClauseBuilder.generateQClause(area, null, filter));
+        cql.append("\"").append(PaginationBuilder.generatePaginationClause()).append("}' ");
 
         System.out.println("getCurrentReadingsPerArea. Executing query: " + cql.toString());
 
-        ResultSet resultSet = session.execute(cql.toString());
+        Statement stmt = PaginationBuilder.addPageSize(cql.toString(), pageSize);
+
+        ResultSet resultSet = session.execute(stmt);
 
         List<Row> allRows = resultSet.all();
         List<VehicleReadingRow> readingRows = new ArrayList<>();
@@ -63,7 +63,8 @@ public class VehicleSearchDao {
 
     public List<VehicleReadingRow> getHistoricalReadingsPerAreaAndTimeframe(Area area, Timeframe timeframe,
                                                                              String filter, Order order,
-                                                                            boolean measurementsRequired) {
+                                                                            boolean measurementsRequired,
+                                                                            Integer pageSize) {
 
         String selectedColumnsSearchString = SearchFormatter.formatMeasurementsAsSearchString(measurementsRequired) ;
 
@@ -75,12 +76,14 @@ public class VehicleSearchDao {
         if (order != null) {
             cql.append(SortClauseBuilder.generateSortClause(order));
         }
-        // pi changed/added paging:driver
-        cql.append(" , \"paging\":\"driver\"}'");
+
+        cql.append(PaginationBuilder.generatePaginationClause()).append("}' ");
 
         System.out.println("getHistoricalReadingsPerAreaAndTimeframe. Executing query: " + cql.toString());
 
-        ResultSet resultSet = session.execute(cql.toString());
+        Statement stmt = PaginationBuilder.addPageSize(cql.toString(), pageSize);
+
+        ResultSet resultSet = session.execute(stmt);
 
         List<Row> allRows = resultSet.all();
         List<VehicleReadingRow> readingRows = new ArrayList<>();
@@ -105,14 +108,15 @@ public class VehicleSearchDao {
         cql.append(SortClauseBuilder.generateSortClause(new Order())).append("}' LIMIT 1");
 
         System.out.println("getLatestVehicleReading. Executing query: " + cql.toString());
-
-        ResultSet resultSet = session.execute(cql.toString());
+        Statement stmt = new SimpleStatement(cql.toString());
+        ResultSet resultSet = session.execute(stmt);
         Row row = resultSet.one();
         return buildVehicleReadingRow(row, measurementsRequired);
     }
 
     public List<VehicleReadingRow> getHistoricalVehicleReadings(String vehicleId, Area area, Timeframe timeframe,
-                                                     String filter, Order order, boolean measurementsRequired) {
+                                                                String filter, Order order,
+                                                                boolean measurementsRequired, Integer pageSize) {
 
         String selectedColumnsSearchString = SearchFormatter.formatMeasurementsAsSearchString(measurementsRequired);
         StringBuilder cql = new StringBuilder("SELECT ").append(selectedColumnsSearchString)
@@ -123,11 +127,14 @@ public class VehicleSearchDao {
         if (order != null) {
             cql.append(SortClauseBuilder.generateSortClause(order));
         }
-        cql.append("}' ");
+
+        cql.append(PaginationBuilder.generatePaginationClause()).append("}' ");
 
         System.out.println("getHistoricalVehicleReadings. Executing query: " + cql.toString());
 
-        ResultSet resultSet = session.execute(cql.toString());
+        Statement stmt = PaginationBuilder.addPageSize(cql.toString(), pageSize);
+
+        ResultSet resultSet = session.execute(stmt);
         List<Row> allRows = resultSet.all();
         List<VehicleReadingRow> readingRows = new ArrayList<>();
         for (Row row : allRows) {
@@ -143,11 +150,13 @@ public class VehicleSearchDao {
         StringBuilder cql = new StringBuilder("SELECT * FROM datastax.vehicle_current_reading WHERE solr_query = '{\"q\": \"");
 
         cql.append(QClauseBuilder.generateQClause(area, null, filter)).append("\" ");
-        cql.append(", ").append(FacetBuilder.buildFacetingClauseByGeoHashOnly(geoHashLevel)).append(" }'");
+        cql.append(", ").append(FacetBuilder.buildFacetingClauseByGeoHashOnly(geoHashLevel)).append("}' ");
 
         System.out.println("getLatestAggregatesByGeoHash. Executing query: " + cql.toString());
 
-        ResultSet resultSet = session.execute(cql.toString());
+        Statement stmt = new SimpleStatement(cql.toString());
+        ResultSet resultSet = session.execute(stmt);
+
         Row row = resultSet.one();
         JsonNode geoHashNode = row.get("facet_fields", JsonNode.class).path("geohash");
 
@@ -163,7 +172,7 @@ public class VehicleSearchDao {
         StringBuilder cql = new StringBuilder("SELECT * FROM datastax.vehicle_historical_readings WHERE solr_query = '{\"q\": \"");
 
         cql.append(QClauseBuilder.generateQClause(area, timeframe, filter)).append("\" ");
-        cql.append(", ").append(FacetBuilder.buildFacetingClauseByGeoHashAndVehicle(geoHashLevel)).append(" }'");
+        cql.append(", ").append(FacetBuilder.buildFacetingClauseByGeoHashAndVehicle(geoHashLevel)).append("}' ");
 
         System.out.println("getHistoricalAggregatesByVehicleAndGeoHash. Executing query: " + cql.toString());
 

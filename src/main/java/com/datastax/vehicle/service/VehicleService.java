@@ -49,12 +49,13 @@ public class VehicleService {
 	/** New methods **/
 
 	public List<VehicleReading> retrieveLatestReadingOfVehicles(Area area, Timeframe timeframe, String filter,
-																boolean measurementsRequired) {
+																boolean measurementsRequired, Integer pageSize) {
 		List<VehicleReading> result = new ArrayList<>();
 
 		// if no timeframe was specified, the request is for current data
 		if (timeframe == null) {
-			List<VehicleReadingRow> readingRows= searchDao.getCurrentReadingsPerArea(area, filter, measurementsRequired);
+			List<VehicleReadingRow> readingRows=
+								searchDao.getCurrentReadingsPerArea(area, filter, measurementsRequired, pageSize);
 			for (VehicleReadingRow vrr : readingRows) {
 				result.add(ResourceAssembler.assembleVehicleReading(vrr));
 			}
@@ -67,11 +68,12 @@ public class VehicleService {
 	}
 
 	public List<VehicleReading> retrieveHistoricalReadingsOfVehicles(Area area, Timeframe timeframe, String filter,
-																	 Order order, boolean measurementsRequired) {
+																	 Order order, boolean measurementsRequired,
+																	 Integer pageSize) {
 
 		List<VehicleReading> result = new ArrayList<>();
 		List<VehicleReadingRow> readingRows= searchDao.getHistoricalReadingsPerAreaAndTimeframe(area, timeframe, filter,
-																							order, measurementsRequired);
+																							order, measurementsRequired, pageSize);
 		for (VehicleReadingRow vrr : readingRows) {
 			result.add(ResourceAssembler.assembleVehicleReading(vrr));
 		}
@@ -87,9 +89,9 @@ public class VehicleService {
 	}
 
 	public List<VehicleReading> retrieveHistoricalReadingsOfSingleVehicle(String vehicleId, Area area, Timeframe timeframe,
-														String filter, Order order, boolean measurementsRequired) {
+														String filter, Order order, boolean measurementsRequired, Integer pageSize) {
 		List<VehicleReadingRow> readingRows = searchDao.getHistoricalVehicleReadings(vehicleId, area, timeframe, filter,
-				order, measurementsRequired);
+				order, measurementsRequired, pageSize);
 		List<VehicleReading> result = new ArrayList<>();
 		for (VehicleReadingRow vrr : readingRows) {
 			result.add(ResourceAssembler.assembleVehicleReading(vrr));
@@ -97,12 +99,12 @@ public class VehicleService {
 		return result;
 	}
 
-	public AggregatedResultWrapper retrieveLatestAggregatesByGeoHash(Integer geoHashLevel, Area area, String filter) {
+	public AggregatedResultWrapper retrieveLatestAggregatesByGeoHash(Integer geoHashLevel, Area area, String filter, Integer pageSize) {
 		return searchDao.getLatestAggregatesByGeoHash(geoHashLevel, area, filter);
 	}
 
 	public AggregatedResultWrapper retrieveHistoricalAggregatesByVehicleAndGeoHash(Integer geoHashLevel, Area area,
-																				   Timeframe timeframe, String filter) {
+																				   Timeframe timeframe, String filter, Integer pageSize) {
 
 		// SELECT * FROM datastax.vehicle_historical_readings
 		// //WHERE solr_query = '{"q": " lat_long:\"IsWithin(POLYGON((48.736989 10.271339, 48.067576 11.60903, 48.774243 12.91312,

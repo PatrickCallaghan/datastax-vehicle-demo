@@ -7,6 +7,7 @@ public class GlobalRequestInputWrapper {
     private Order order;
     private String filter;
     private boolean measurementsRequired;
+    private Integer pageSize;
 
     public GlobalRequestInputWrapper() {
     }
@@ -50,4 +51,8 @@ public class GlobalRequestInputWrapper {
     public void setMeasurementsRequired(boolean retrieveMeasurements) {
         this.measurementsRequired = retrieveMeasurements;
     }
+
+    public Integer getPageSize() { return pageSize; }
+
+    public void setPageSize(Integer pageSize) { this.pageSize = pageSize; }
 }

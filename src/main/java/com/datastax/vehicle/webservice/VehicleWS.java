@@ -129,7 +129,7 @@ public class VehicleWS {
 		//TODO implement latest on historical timeframe
 		List<VehicleReading> result = service.retrieveLatestReadingOfVehicles(
 									inputWrapper.getArea(), inputWrapper.getTimeframe(), inputWrapper.getFilter(),
-									inputWrapper.isMeasurementsRequired());
+									inputWrapper.isMeasurementsRequired(), inputWrapper.getPageSize());
 		System.out.println("Web Service: Current vehicles in area successfully retrieved. Size " + result.size());
 
 		return Response.status(201).entity(result).build();
@@ -166,7 +166,8 @@ public class VehicleWS {
 		List<VehicleReading> result = service.retrieveHistoricalReadingsOfVehicles(
 															inputWrapper.getArea(), inputWrapper.getTimeframe(),
 															inputWrapper.getFilter(), inputWrapper.getOrder(),
-															inputWrapper.isMeasurementsRequired());
+															inputWrapper.isMeasurementsRequired(),
+															inputWrapper.getPageSize());
 		System.out.println("Web Service: Historical readings of all vehicles in area successfully retrieved. Size " + result.size());
 
 		return Response.status(201).entity(result).build();
@@ -242,7 +243,8 @@ public class VehicleWS {
 		List<VehicleReading> result = service.retrieveHistoricalReadingsOfSingleVehicle(inputWrapper.getVehicleId(),
 																	inputWrapper.getArea(), inputWrapper.getTimeframe(),
 																	inputWrapper.getFilter(), inputWrapper.getOrder(),
-																	inputWrapper.isMeasurementsRequired());
+																	inputWrapper.isMeasurementsRequired(),
+																	inputWrapper.getPageSize());
 		System.out.println("Web Service: Retrieved historical readings of vehicle " + inputWrapper.getVehicleId());
 
 		return Response.status(201).entity(result).build();
@@ -270,7 +272,8 @@ public class VehicleWS {
 		}
 
 		AggregatedResultWrapper result = service.retrieveLatestAggregatesByGeoHash(inputWrapper.getGeoHashLevel(),
-																	inputWrapper.getArea(), inputWrapper.getFilter());
+																	inputWrapper.getArea(), inputWrapper.getFilter(),
+																	inputWrapper.getPageSize());
 
 		return Response.status(201).entity(result).build();
 	}
@@ -305,7 +308,7 @@ public class VehicleWS {
 		AggregatedResultWrapper result = service.retrieveHistoricalAggregatesByVehicleAndGeoHash(
 																inputWrapper.getGeoHashLevel(),
 																inputWrapper.getArea(), inputWrapper.getTimeframe(),
-																inputWrapper.getFilter());
+																inputWrapper.getFilter(), inputWrapper.getPageSize());
 
 		return Response.status(201).entity(result).build();
 	}
