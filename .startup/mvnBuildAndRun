@@ -1,0 +1,28 @@
+#!/bin/bash
+
+set -x
+
+IP=$(ifconfig | awk '/inet/ { print $2 }' | egrep -v '^fe|^127|^192|^172|::' | head -1)
+IP=${IP#addr:}
+
+if [[ $HOSTNAME == "node"* ]] ; then
+    #rightscale
+    IP=$(grep $(hostname)_ext /etc/hosts | awk '{print $1}')
+fi
+
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    # Mac OSX
+    IP=localhost
+fi
+
+#clear old schema
+mvn clean compile exec:java -Dexec.mainClass="com.datastax.demo.SchemaTeardown"
+
+#recreate schema
+mvn clean compile exec:java -Dexec.mainClass="com.datastax.demo.SchemaSetup" -DcontactPoints=$IP
+
+#start moving cars
+nohup mvn clean compile exec:java -Dexec.mainClass="com.datastax.vehicle.Main" -DcontactPoints=$IP &
+
+#host webserver
+nohup mvn jetty:run &
